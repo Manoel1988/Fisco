@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Documentos Fiscais</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 98vw;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px 10px;
+            overflow-x: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h2 {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 30px;
+        }
+        .ano-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .ano-tab {
+            background: #f1f1f1;
+            color: #764ba2;
+            border-radius: 20px;
+            padding: 8px 22px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: background 0.2s;
+        }
+        .ano-tab.active {
+            background: #764ba2;
+            color: #fff;
+        }
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .doc-table th, .doc-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        .doc-table th {
+            background: #f8f9fa;
+            color: #764ba2;
+            font-weight: 700;
+        }
+        .doc-table td {
+            background: #fdfdfd;
+        }
+        .doc-type {
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: left;
+        }
+        .upload-btn {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .upload-btn:hover {
+            background: #219150;
+        }
+        .file-link {
+            color: #2980b9;
+            text-decoration: underline;
+            font-size: 0.95rem;
+        }
+        .uploaded {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .not-uploaded {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        @media (max-width: 900px) {
+            .doc-table th, .doc-table td {
+                font-size: 0.8rem;
+                padding: 4px 2px;
+            }
+        }
+    </style>
+    <script>
+        function showAno(ano) {
+            document.querySelectorAll('.ano-content').forEach(function(tab) {
+                tab.style.display = 'none';
+            });
+            document.getElementById('ano-' + ano).style.display = 'block';
+            document.querySelectorAll('.ano-tab').forEach(function(tab) {
+                tab.classList.remove('active');
+            });
+            document.getElementById('tab-' + ano).classList.add('active');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload de Documentos Fiscais</h1>
+        <h2>{{ empresa.razao_social }} (CNPJ: {{ empresa.cnpj }})</h2>
+        <div class="ano-tabs">
+            {% for ano in anos_para_exibir %}
+                <button class="ano-tab {% if forloop.first %}active{% endif %}" id="tab-{{ ano }}" onclick="showAno('{{ ano }}')">{{ ano }}</button>
+            {% endfor %}
+        </div>
+        {% for ano in anos_para_exibir %}
+        <div class="ano-content" id="ano-{{ ano }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="ano" value="{{ ano }}">
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo de Documento</th>
+                            {% for mes_val, mes_label in meses %}
+                                <th>{{ mes_label }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tipo_val, tipo_label in tipos_documento %}
+                        <tr>
+                            <td class="doc-type">{{ tipo_label }}</td>
+                            {% for mes_val, mes_label in meses %}
+                                <td>
+                                    {% with doc=documentos_por_tipo_e_periodo[tipo_val][ano][mes_val] %}
+                                        {% if doc.uploaded %}
+                                            <a href="{{ doc.file_url }}" class="file-link" target="_blank">Arquivo</a><br>
+                                            <span class="uploaded">Enviado</span>
+                                        {% else %}
+                                            <input type="file" name="arquivo_{{ tipo_val }}_{{ mes_val }}_{{ ano }}" style="margin-bottom:4px;">
+                                            <button type="submit" class="upload-btn" name="upload_btn" value="{{ tipo_val }}_{{ mes_val }}_{{ ano }}">Enviar</button>
+                                            <br><span class="not-uploaded">Não enviado</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        // Ativa a primeira aba por padrão
+        showAno('{{ anos_para_exibir.0 }}');
+    </script>
+</body>
+</html>
