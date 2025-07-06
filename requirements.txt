@@ -1,1 +1,16 @@
-PyPDF2 
+# Django e dependências core
+Django>=5.0.0
+PyPDF2>=3.0.0
+
+# Webscraping e processamento de dados
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Utilitários
+python-dateutil>=2.8.0
+
+# Para produção (opcional)
+gunicorn>=20.1.0
+whitenoise>=6.0.0 

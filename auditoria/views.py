@@ -6,7 +6,7 @@ import requests
 import PyPDF2
 from time import sleep
 from .models import Empresa, NotaFiscal, DocumentoFiscal
-from .logica_auditoria import auditar_pis_cofins_monofasico
+from .logica_auditoria import auditar_pis_cofins_monofasico, gerar_contexto_tipi_para_ia, auditar_ipi_com_tipi
 from .forms import DocumentoFiscalForm
 import re
 
@@ -52,7 +52,7 @@ def detalhes_auditoria(request, empresa_id):
     # Análise de auditoria somente quando solicitado
     if request.method == 'POST' and 'analisar_empresa' in request.POST:
         resultado_auditoria = auditar_pis_cofins_monofasico(empresa_id)
-        # --- DeepSeek API ---
+        # --- DeepSeek API com integração TIPI ---
         docs = DocumentoFiscal.objects.filter(empresa=empresa)
         documentos_texto = []
         for doc in docs:
@@ -83,7 +83,31 @@ def detalhes_auditoria(request, empresa_id):
                 if texto:
                     pass  # Não limitar o tamanho do texto enviado para a IA
                 documentos_texto.append(f"{doc.get_tipo_documento_display()} - {doc.get_mes_display()}/{doc.ano} - Conteúdo:\n{texto}")
-        prompt = f"Audite os documentos fiscais abaixo e aponte possíveis valores pagos de forma errada ao governo, considerando os últimos 5 anos. Liste inconsistências e explique o motivo.\nDocumentos:\n" + "\n\n".join(documentos_texto)
+        
+        # Gerar contexto TIPI para a IA
+        contexto_tipi = gerar_contexto_tipi_para_ia(empresa_id)
+        
+        # Realizar auditoria de IPI com TIPI
+        auditoria_ipi = auditar_ipi_com_tipi(empresa_id)
+        
+        # Montar prompt enriquecido com dados da TIPI
+        prompt_tipi = ""
+        if contexto_tipi['produtos_identificados']:
+            prompt_tipi = f"\n\nDADOS DA TABELA TIPI IDENTIFICADOS:\n"
+            prompt_tipi += f"Total de registros TIPI disponíveis: {contexto_tipi['total_registros_tipi']}\n"
+            prompt_tipi += "Produtos identificados nos documentos:\n"
+            for produto in contexto_tipi['produtos_identificados']:
+                prompt_tipi += f"- NCM {produto['codigo_ncm']}: {produto['descricao']} - IPI: {produto['aliquota_ipi']}%\n"
+                if produto['observacoes']:
+                    prompt_tipi += f"  Observações: {produto['observacoes']}\n"
+        
+        if auditoria_ipi['detalhes_notas_ipi']:
+            prompt_tipi += f"\n\nAUDITORIA DE IPI DETECTADA:\n"
+            prompt_tipi += f"Potencial de recuperação IPI: R$ {auditoria_ipi['total_potencial_recuperacao_ipi']}\n"
+            for nota in auditoria_ipi['detalhes_notas_ipi']:
+                prompt_tipi += f"- Nota {nota['numero']}: NCM {nota['codigo_ncm']} - Diferença: R$ {nota['diferenca']}\n"
+        
+        prompt = f"Audite os documentos fiscais abaixo e aponte possíveis valores pagos de forma errada ao governo, considerando os últimos 5 anos. Liste inconsistências e explique o motivo.\n\nEmpresa: {empresa.razao_social} - Regime: {empresa.regime_tributario}\n\nDocumentos:\n" + "\n\n".join(documentos_texto) + prompt_tipi
         try:
             response = requests.post(
                 "https://api.deepseek.com/v1/chat/completions",

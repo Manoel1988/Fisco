@@ -86,3 +86,43 @@ class DocumentoFiscal(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_documento_display()} - {self.get_mes_display()}/{self.ano} ({self.empresa.razao_social})"
+
+# NOVO MODELO: Tabela TIPI
+class TabelaTIPI(models.Model):
+    codigo_ncm = models.CharField(max_length=20, unique=True, help_text="Código NCM do produto")
+    descricao = models.TextField(help_text="Descrição do produto conforme TIPI")
+    aliquota_ipi = models.DecimalField(max_digits=5, decimal_places=2, help_text="Alíquota do IPI em %")
+    observacoes = models.TextField(blank=True, help_text="Observações e exceções")
+    data_atualizacao = models.DateTimeField(auto_now=True, help_text="Data da última atualização")
+    decreto_origem = models.CharField(max_length=100, blank=True, help_text="Decreto que estabeleceu/alterou a alíquota")
+    vigencia_inicio = models.DateField(null=True, blank=True, help_text="Data de início da vigência")
+    vigencia_fim = models.DateField(null=True, blank=True, help_text="Data de fim da vigência (se aplicável)")
+    ativo = models.BooleanField(default=True, help_text="Se o código está ativo")
+
+    class Meta:
+        verbose_name = "Tabela TIPI"
+        verbose_name_plural = "Tabelas TIPI"
+        ordering = ['codigo_ncm']
+
+    def __str__(self):
+        return f"{self.codigo_ncm} - {self.aliquota_ipi}% IPI"
+
+# NOVO MODELO: Histórico de Atualizações TIPI
+class HistoricoAtualizacaoTIPI(models.Model):
+    data_atualizacao = models.DateTimeField(auto_now_add=True)
+    total_registros = models.IntegerField(help_text="Total de registros atualizados")
+    registros_novos = models.IntegerField(help_text="Registros novos adicionados")
+    registros_alterados = models.IntegerField(help_text="Registros existentes alterados")
+    fonte_dados = models.CharField(max_length=255, help_text="URL ou fonte dos dados")
+    usuario = models.CharField(max_length=100, help_text="Usuário que executou a atualização")
+    sucesso = models.BooleanField(default=True)
+    log_detalhes = models.TextField(blank=True, help_text="Log detalhado da atualização")
+
+    class Meta:
+        verbose_name = "Histórico de Atualização TIPI"
+        verbose_name_plural = "Históricos de Atualizações TIPI"
+        ordering = ['-data_atualizacao']
+
+    def __str__(self):
+        status = "Sucesso" if self.sucesso else "Falha"
+        return f"Atualização {self.data_atualizacao.strftime('%d/%m/%Y %H:%M')} - {status}"

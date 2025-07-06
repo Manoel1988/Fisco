@@ -1,0 +1,62 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block object-tools-items %}
+    {% if botao_atualizar %}
+        <li>
+            <a href="{% url 'admin:auditoria_tabelatipi_atualizar' %}" class="btn btn-primary" 
+               onclick="return confirm('Tem certeza que deseja atualizar a tabela TIPI? Esta operação pode demorar alguns minutos.');"
+               style="background-color: #28a745; border-color: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">
+                🔄 Atualizar Tabela TIPI
+            </a>
+        </li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .btn-primary:hover {
+            background-color: #218838 !important;
+            border-color: #1e7e34 !important;
+        }
+        
+        .tipi-info {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .tipi-info h4 {
+            color: #155724;
+            margin: 0 0 10px 0;
+        }
+        
+        .tipi-info ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .tipi-info li {
+            color: #155724;
+            margin-bottom: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="tipi-info">
+        <h4>📋 Sobre a Tabela TIPI</h4>
+        <ul>
+            <li><strong>TIPI:</strong> Tabela de Incidência do Imposto sobre Produtos Industrializados</li>
+            <li><strong>Função:</strong> Define as alíquotas do IPI para cada código NCM</li>
+            <li><strong>Atualização:</strong> Clique no botão "Atualizar Tabela TIPI" para buscar dados mais recentes</li>
+            <li><strong>Fonte:</strong> Dados obtidos do site oficial da Receita Federal</li>
+            <li><strong>Uso no Sistema:</strong> Utilizada pela IA para análises fiscais precisas</li>
+        </ul>
+    </div>
+    {{ block.super }}
+{% endblock %} 
