@@ -56,6 +56,7 @@ class TabelaTIPIAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path('atualizar-tipi/', self.admin_site.admin_view(self.atualizar_tipi_view), name='auditoria_tabelatipi_atualizar'),
+            path('upload-pdf/', self.admin_site.admin_view(self.upload_pdf_view), name='auditoria_tabelatipi_upload_pdf'),
         ]
         return custom_urls + urls
     
@@ -80,6 +81,10 @@ class TabelaTIPIAdmin(admin.ModelAdmin):
             messages.error(request, f"Erro inesperado: {str(e)}")
         
         return HttpResponseRedirect(reverse('admin:auditoria_tabelatipi_changelist'))
+    
+    def upload_pdf_view(self, request):
+        """Redireciona para a view de upload de PDF"""
+        return HttpResponseRedirect(reverse('auditoria:upload_tipi_pdf'))
     
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}

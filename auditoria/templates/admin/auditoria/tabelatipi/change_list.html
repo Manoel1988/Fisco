@@ -1,62 +1,155 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls static admin_list %}
 
-{% block object-tools-items %}
-    {% if botao_atualizar %}
-        <li>
-            <a href="{% url 'admin:auditoria_tabelatipi_atualizar' %}" class="btn btn-primary" 
-               onclick="return confirm('Tem certeza que deseja atualizar a tabela TIPI? Esta operação pode demorar alguns minutos.');"
-               style="background-color: #28a745; border-color: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">
-                🔄 Atualizar Tabela TIPI
-            </a>
-        </li>
-    {% endif %}
-    {{ block.super }}
-{% endblock %}
-
 {% block extrahead %}
-    {{ block.super }}
-    <style>
-        .btn-primary:hover {
-            background-color: #218838 !important;
-            border-color: #1e7e34 !important;
-        }
-        
-        .tipi-info {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            border-radius: 4px;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .tipi-info h4 {
-            color: #155724;
-            margin: 0 0 10px 0;
-        }
-        
-        .tipi-info ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        
-        .tipi-info li {
-            color: #155724;
-            margin-bottom: 5px;
-        }
-    </style>
+{{ block.super }}
+<style>
+    .tipi-actions {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .tipi-actions h3 {
+        margin-top: 0;
+        color: #495057;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 15px;
+        background-color: #007cba;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .action-btn:hover {
+        background-color: #005a87;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .action-btn.secondary {
+        background-color: #6c757d;
+    }
+    
+    .action-btn.secondary:hover {
+        background-color: #545b62;
+    }
+    
+    .action-btn.success {
+        background-color: #28a745;
+    }
+    
+    .action-btn.success:hover {
+        background-color: #1e7e34;
+    }
+    
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007cba;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
 {% endblock %}
 
-{% block content %}
-    <div class="tipi-info">
-        <h4>📋 Sobre a Tabela TIPI</h4>
-        <ul>
-            <li><strong>TIPI:</strong> Tabela de Incidência do Imposto sobre Produtos Industrializados</li>
-            <li><strong>Função:</strong> Define as alíquotas do IPI para cada código NCM</li>
-            <li><strong>Atualização:</strong> Clique no botão "Atualizar Tabela TIPI" para buscar dados mais recentes</li>
-            <li><strong>Fonte:</strong> Dados obtidos do site oficial da Receita Federal</li>
-            <li><strong>Uso no Sistema:</strong> Utilizada pela IA para análises fiscais precisas</li>
+{% block content_title %}
+    {% if title %}
+        <h1>{{ title }} 📊</h1>
+    {% endif %}
+{% endblock %}
+
+{% block result_list %}
+    <div class="tipi-actions">
+        <h3>🔄 Gerenciamento da Tabela TIPI</h3>
+        <p>Gerencie e atualize a Tabela de Incidência do Imposto sobre Produtos Industrializados (TIPI)</p>
+        
+        <div class="action-buttons">
+            <a href="{% url 'auditoria:upload_tipi_pdf' %}" class="action-btn success">
+                📄 Upload PDF da TIPI
+            </a>
+            
+            <a href="{% url 'admin:auditoria_tabelatipi_atualizar' %}" class="action-btn" 
+               onclick="return confirm('Deseja atualizar a tabela TIPI via webscraping? Esta operação pode demorar alguns minutos.')">
+                🔄 Atualizar via Web
+            </a>
+            
+            <a href="{% url 'admin:auditoria_historicoatualizacaotipi_changelist' %}" class="action-btn secondary">
+                📈 Histórico de Atualizações
+            </a>
+        </div>
+        
+        <div class="stats-summary">
+            <div class="stat-item">
+                <div class="stat-number">{{ cl.result_count }}</div>
+                <div class="stat-label">Total de Registros</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">{{ ativos_count|default:0 }}</div>
+                <div class="stat-label">Registros Ativos</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">{{ isentos_count|default:0 }}</div>
+                <div class="stat-label">Produtos Isentos</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">{{ tributados_count|default:0 }}</div>
+                <div class="stat-label">Produtos Tributados</div>
+            </div>
+        </div>
+    </div>
+    
+    {{ block.super }}
+{% endblock %}
+
+{% block pagination %}
+    {{ block.super }}
+    
+    <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 5px;">
+        <h4>ℹ️ Informações sobre a TIPI</h4>
+        <ul style="margin-bottom: 0;">
+            <li><strong>Decreto Base:</strong> 11.158/2022 (TIPI 2022)</li>
+            <li><strong>Última Atualização:</strong> ADE RFB 008/2024</li>
+            <li><strong>Vigência:</strong> Conforme decretos específicos</li>
+            <li><strong>Uso no Sistema:</strong> Análise automática de IPI via IA</li>
         </ul>
     </div>
-    {{ block.super }}
 {% endblock %} 

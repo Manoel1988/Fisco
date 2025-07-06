@@ -1,14 +1,25 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.db import transaction
 from django.conf import settings
+from datetime import datetime
 import requests
 import PyPDF2
 from time import sleep
-from .models import Empresa, NotaFiscal, DocumentoFiscal
+import re
+import logging
+
+from .models import Empresa, NotaFiscal, DocumentoFiscal, TabelaTIPI, HistoricoAtualizacaoTIPI
 from .logica_auditoria import auditar_pis_cofins_monofasico, gerar_contexto_tipi_para_ia, auditar_ipi_com_tipi
 from .forms import DocumentoFiscalForm
-import re
+from .services.tipi_pdf_extractor import TIPIPDFExtractor
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 # auditoria/views.py
@@ -355,6 +366,117 @@ def analisar_empresa_ajax(request, empresa_id):
             'resultado_auditoria': resultado_auditoria,
             'valor_ia_recuperacao': valor_ia_recuperacao,
         })
+
+@login_required
+def upload_tipi_pdf(request):
+    """View para upload e processamento de PDF da TIPI"""
+    if request.method == 'POST':
+        if 'pdf_file' not in request.FILES:
+            messages.error(request, 'Nenhum arquivo foi enviado.')
+            return redirect('auditoria:upload_tipi_pdf')
+        
+        pdf_file = request.FILES['pdf_file']
+        
+        # Validar tipo de arquivo
+        if not pdf_file.name.lower().endswith('.pdf'):
+            messages.error(request, 'Apenas arquivos PDF são aceitos.')
+            return redirect('auditoria:upload_tipi_pdf')
+        
+        # Validar tamanho (máximo 50MB)
+        if pdf_file.size > 50 * 1024 * 1024:
+            messages.error(request, 'Arquivo muito grande. Máximo permitido: 50MB.')
+            return redirect('auditoria:upload_tipi_pdf')
+        
+        try:
+            # Processar PDF
+            extractor = TIPIPDFExtractor()
+            extracted_data = extractor.extract_from_pdf(pdf_file)
+            
+            if not extracted_data:
+                messages.warning(request, 'Nenhum dado da TIPI foi encontrado no PDF.')
+                return redirect('auditoria:upload_tipi_pdf')
+            
+            # Importar dados para o banco
+            imported_count, updated_count = import_tipi_data(extracted_data, request.user)
+            
+            # Registrar histórico
+            HistoricoAtualizacaoTIPI.objects.create(
+                usuario=request.user,
+                fonte='Upload PDF',
+                registros_importados=imported_count,
+                registros_atualizados=updated_count,
+                observacoes=f'Arquivo: {pdf_file.name}, Total extraído: {len(extracted_data)}'
+            )
+            
+            messages.success(
+                request, 
+                f'Importação concluída! {imported_count} novos registros e {updated_count} atualizados.'
+            )
+            
+        except Exception as e:
+            logger.error(f"Erro ao processar PDF da TIPI: {str(e)}")
+            messages.error(request, f'Erro ao processar PDF: {str(e)}')
+        
+        return redirect('auditoria:upload_tipi_pdf')
+    
+    # GET - mostrar formulário
+    context = {
+        'total_registros': TabelaTIPI.objects.count(),
+        'ultimo_historico': HistoricoAtualizacaoTIPI.objects.order_by('-data_atualizacao').first()
+    }
+    
+    return render(request, 'auditoria/upload_tipi_pdf.html', context)
+
+def import_tipi_data(extracted_data, user):
+    """
+    Importa dados extraídos do PDF para o banco de dados
+    
+    Returns:
+        tuple: (imported_count, updated_count)
+    """
+    imported_count = 0
+    updated_count = 0
+    
+    with transaction.atomic():
+        for item in extracted_data:
+            try:
+                codigo_ncm = item.get('codigo_ncm')
+                if not codigo_ncm:
+                    continue
+                
+                # Verificar se já existe
+                existing = TabelaTIPI.objects.filter(codigo_ncm=codigo_ncm).first()
+                
+                if existing:
+                    # Atualizar registro existente
+                    existing.descricao = item.get('descricao', existing.descricao)
+                    existing.aliquota_ipi = item.get('aliquota_ipi', existing.aliquota_ipi)
+                    existing.observacoes = item.get('observacoes', existing.observacoes)
+                    existing.decreto_origem = 'Upload PDF - ADE 008/2024'
+                    existing.data_atualizacao = datetime.now()
+                    existing.ativo = True
+                    existing.save()
+                    updated_count += 1
+                    
+                else:
+                    # Criar novo registro
+                    TabelaTIPI.objects.create(
+                        codigo_ncm=codigo_ncm,
+                        descricao=item.get('descricao', ''),
+                        aliquota_ipi=item.get('aliquota_ipi', 0),
+                        observacoes=item.get('observacoes', ''),
+                        decreto_origem='Upload PDF - ADE 008/2024',
+                        vigencia_inicio=datetime.now().date(),
+                        ativo=True
+                    )
+                    imported_count += 1
+                    
+            except Exception as e:
+                logger.error(f"Erro ao importar item {item.get('codigo_ncm')}: {str(e)}")
+                continue
+    
+    logger.info(f"Importação concluída: {imported_count} novos, {updated_count} atualizados")
+    return imported_count, updated_count
 
 # auditoria/views.py
 # ...

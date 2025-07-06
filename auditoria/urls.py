@@ -8,4 +8,5 @@ urlpatterns = [
     path('auditar/<int:empresa_id>/', views.detalhes_auditoria, name='detalhes_auditoria'),
     path('upload/<int:empresa_id>/', views.upload_documentos, name='upload_documentos'),
     path('analisar_ajax/<int:empresa_id>/', views.analisar_empresa_ajax, name='analisar_empresa_ajax'),
+    path('upload-tipi-pdf/', views.upload_tipi_pdf, name='upload_tipi_pdf'),
 ]

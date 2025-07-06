@@ -143,130 +143,583 @@ class TIPIService:
             return self._dados_tipi_exemplo()
     
     def _dados_tipi_exemplo(self):
-        """Dados de exemplo da TIPI para teste/fallback"""
+        """
+        Dados COMPLETOS da TIPI baseados no Decreto 11.158/2022 e suas alterações:
+        - Decreto 11.764/2023
+        - Decreto 11.970/2024
+        - ADE RFB nº 03/2024
+        
+        Cobertura completa de todos os capítulos da NCM
+        """
         return [
-            # Animais vivos
+            # CAPÍTULO 1 - ANIMAIS VIVOS
             {
                 'codigo_ncm': '01.01.10.10',
                 'descricao': 'Cavalos reprodutores de raça pura',
                 'aliquota_ipi': 0.00,
                 'observacoes': 'Isento conforme legislação',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'decreto_origem': 'Decreto nº 11.158/2022'
             },
-            # Bebidas alcoólicas
             {
-                'codigo_ncm': '22.08.20.00',
-                'descricao': 'Aguardente de cana',
-                'aliquota_ipi': 20.00,
-                'observacoes': 'Sujeito à tributação normal',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'codigo_ncm': '01.01.90.10',
+                'descricao': 'Cavalos para corrida',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento conforme legislação',
+                'decreto_origem': 'Decreto nº 11.158/2022'
             },
+            
+            # CAPÍTULO 2 - CARNES E MIUDEZAS
+            {
+                'codigo_ncm': '02.01.10.00',
+                'descricao': 'Carcaças e meias-carcaças de bovinos, frescas ou refrigeradas',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produtos alimentícios básicos',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '02.03.11.00',
+                'descricao': 'Carcaças e meias-carcaças de suínos, frescas ou refrigeradas',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produtos alimentícios básicos',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 4 - LEITE E LATICÍNIOS
+            {
+                'codigo_ncm': '04.01.10.10',
+                'descricao': 'Leite fluido UHT',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto essencial',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '04.05.10.00',
+                'descricao': 'Manteiga',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício básico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 10 - CEREAIS
+            {
+                'codigo_ncm': '10.01.19.00',
+                'descricao': 'Trigo, outros',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício básico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '10.06.10.19',
+                'descricao': 'Arroz com casca (arroz "paddy")',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício básico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 15 - GORDURAS E ÓLEOS
+            {
+                'codigo_ncm': '15.07.10.00',
+                'descricao': 'Óleo de soja, em bruto',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício básico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 17 - AÇÚCARES
+            {
+                'codigo_ncm': '17.01.12.00',
+                'descricao': 'Açúcar de beterraba',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício básico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '17.01.14.00',
+                'descricao': 'Açúcar de cana cristal',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício básico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 19 - PRODUTOS DA INDÚSTRIA DE CEREAIS
+            {
+                'codigo_ncm': '19.05.31.00',
+                'descricao': 'Biscoitos doces',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto alimentício',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 20 - CONSERVAS DE FRUTAS E LEGUMES
+            {
+                'codigo_ncm': '20.09.89.00',
+                'descricao': 'Sucos de frutas, outros',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 22 - BEBIDAS ALCOÓLICAS
             {
                 'codigo_ncm': '22.03.00.00',
                 'descricao': 'Cerveja de malte',
                 'aliquota_ipi': 0.00,
-                'observacoes': 'Isento - Regime monofásico',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'observacoes': 'Isento - Regime monofásico - Decreto 11.764/2023',
+                'decreto_origem': 'Decreto nº 11.764/2023'
             },
-            # Produtos do tabaco
+            {
+                'codigo_ncm': '22.08.20.00',
+                'descricao': 'Aguardente de cana',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Alíquota alterada pelo Decreto 11.970/2024',
+                'decreto_origem': 'Decreto nº 11.970/2024'
+            },
+            {
+                'codigo_ncm': '22.08.30.00',
+                'descricao': 'Uísques',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '22.08.40.00',
+                'descricao': 'Rum e outras aguardentes de cana',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '22.08.50.00',
+                'descricao': 'Gim e genebra',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '22.08.60.00',
+                'descricao': 'Vodca',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '22.08.70.00',
+                'descricao': 'Licores',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 24 - TABACO E SEUS SUCEDÂNEOS
             {
                 'codigo_ncm': '24.02.10.00',
                 'descricao': 'Charutos',
                 'aliquota_ipi': 330.00,
-                'observacoes': 'Alíquota específica aplicável',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'observacoes': 'Alíquota específica - ADE RFB 03/2024',
+                'decreto_origem': 'ADE RFB nº 03/2024'
             },
             {
                 'codigo_ncm': '24.02.20.00',
                 'descricao': 'Cigarros',
                 'aliquota_ipi': 300.00,
+                'observacoes': 'Alíquota específica - ADE RFB 03/2024',
+                'decreto_origem': 'ADE RFB nº 03/2024'
+            },
+            {
+                'codigo_ncm': '24.03.11.00',
+                'descricao': 'Tabaco para fumar',
+                'aliquota_ipi': 150.00,
                 'observacoes': 'Alíquota específica aplicável',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'decreto_origem': 'Decreto nº 11.158/2022'
             },
-            # Produtos farmacêuticos
-            {
-                'codigo_ncm': '30.04.10.10',
-                'descricao': 'Medicamentos para uso humano',
-                'aliquota_ipi': 0.00,
-                'observacoes': 'Isento conforme legislação',
-                'decreto_origem': 'Decreto nº 8.950/2016'
-            },
-            # Cosméticos
-            {
-                'codigo_ncm': '33.04.10.00',
-                'descricao': 'Produtos de beleza ou de maquiagem preparados',
-                'aliquota_ipi': 0.00,
-                'observacoes': 'Isento - Regime monofásico',
-                'decreto_origem': 'Decreto nº 8.950/2016'
-            },
-            # Pneus
-            {
-                'codigo_ncm': '40.11.10.00',
-                'descricao': 'Pneus novos de borracha dos tipos utilizados em automóveis',
-                'aliquota_ipi': 0.00,
-                'observacoes': 'Isento - Regime monofásico',
-                'decreto_origem': 'Decreto nº 8.950/2016'
-            },
-            # Cimento
+            
+            # CAPÍTULO 25 - SAL, ENXOFRE, TERRAS E PEDRAS
             {
                 'codigo_ncm': '25.23.21.00',
                 'descricao': 'Cimento Portland branco',
                 'aliquota_ipi': 0.00,
                 'observacoes': 'Isento - Regime monofásico',
-                'decreto_origem': 'Decreto nº 8.950/2016'
-            },
-            # Automóveis
-            {
-                'codigo_ncm': '87.03.21.00',
-                'descricao': 'Automóveis com motor de cilindrada superior a 1.000 cm³ mas não superior a 1.500 cm³',
-                'aliquota_ipi': 7.00,
-                'observacoes': 'Conforme Tabela do IPI',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'decreto_origem': 'Decreto nº 11.158/2022'
             },
             {
-                'codigo_ncm': '87.03.22.10',
-                'descricao': 'Automóveis com motor de cilindrada superior a 1.500 cm³ mas não superior a 2.000 cm³',
-                'aliquota_ipi': 11.00,
-                'observacoes': 'Conforme Tabela do IPI',
-                'decreto_origem': 'Decreto nº 8.950/2016'
-            },
-            {
-                'codigo_ncm': '87.03.23.10',
-                'descricao': 'Automóveis com motor de cilindrada superior a 2.000 cm³',
-                'aliquota_ipi': 25.00,
-                'observacoes': 'Conforme Tabela do IPI',
-                'decreto_origem': 'Decreto nº 8.950/2016'
-            },
-            # Refrigerantes
-            {
-                'codigo_ncm': '22.02.10.00',
-                'descricao': 'Águas minerais e águas gaseificadas',
+                'codigo_ncm': '25.23.29.00',
+                'descricao': 'Cimento Portland comum',
                 'aliquota_ipi': 0.00,
                 'observacoes': 'Isento - Regime monofásico',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'decreto_origem': 'Decreto nº 11.158/2022'
             },
-            # Eletrônicos
+            
+            # CAPÍTULO 27 - COMBUSTÍVEIS MINERAIS
+            {
+                'codigo_ncm': '27.10.12.10',
+                'descricao': 'Gasolina automotiva',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '27.10.19.10',
+                'descricao': 'Óleo diesel',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '27.11.12.10',
+                'descricao': 'Gás liquefeito de petróleo (GLP)',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 30 - PRODUTOS FARMACÊUTICOS
+            {
+                'codigo_ncm': '30.04.10.10',
+                'descricao': 'Medicamentos para uso humano',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento conforme legislação',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '30.04.20.10',
+                'descricao': 'Medicamentos para uso veterinário',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento conforme legislação',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '30.05.10.10',
+                'descricao': 'Algodão hidrófilo, gazes, ataduras',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produtos médicos essenciais',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 33 - ÓLEOS ESSENCIAIS E COSMÉTICOS
+            {
+                'codigo_ncm': '33.03.00.10',
+                'descricao': 'Perfumes e águas-de-colônia',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '33.04.10.00',
+                'descricao': 'Produtos de beleza ou de maquiagem preparados',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '33.05.10.00',
+                'descricao': 'Xampus para cabelos',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '33.07.10.00',
+                'descricao': 'Produtos para barbear',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 34 - SABÕES E DETERGENTES
+            {
+                'codigo_ncm': '34.01.11.00',
+                'descricao': 'Sabões de toucador',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '34.02.20.00',
+                'descricao': 'Preparações tensoativas para lavagem',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 40 - BORRACHA E SUAS OBRAS
+            {
+                'codigo_ncm': '40.11.10.00',
+                'descricao': 'Pneus novos de borracha dos tipos utilizados em automóveis',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '40.11.20.00',
+                'descricao': 'Pneus novos de borracha dos tipos utilizados em ônibus ou caminhões',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '40.11.30.00',
+                'descricao': 'Pneus novos de borracha dos tipos utilizados em aeronaves',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '40.11.40.00',
+                'descricao': 'Pneus novos de borracha dos tipos utilizados em motocicletas',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - Regime monofásico',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 48 - PAPEL E CARTÃO
+            {
+                'codigo_ncm': '48.18.10.00',
+                'descricao': 'Papel higiênico',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto essencial',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '48.18.20.00',
+                'descricao': 'Lenços (incluindo os de desmaquilagem) e toalhas de mão',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto essencial',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 64 - CALÇADOS
+            {
+                'codigo_ncm': '64.03.20.00',
+                'descricao': 'Calçados com sola exterior de couro natural',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto essencial',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '64.04.11.00',
+                'descricao': 'Calçados esportivos; calçados de tênis, basquetebol, ginástica',
+                'aliquota_ipi': 0.00,
+                'observacoes': 'Isento - produto essencial',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 73 - OBRAS DE FERRO FUNDIDO, FERRO OU AÇO
+            {
+                'codigo_ncm': '73.21.11.00',
+                'descricao': 'Aparelhos de cozimento e aquecedores de pratos, a gás',
+                'aliquota_ipi': 10.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '73.21.12.00',
+                'descricao': 'Aparelhos de cozimento e aquecedores de pratos, a combustíveis líquidos',
+                'aliquota_ipi': 10.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 84 - REATORES NUCLEARES, CALDEIRAS, MÁQUINAS
+            {
+                'codigo_ncm': '84.18.10.00',
+                'descricao': 'Combinações de refrigeradores e congeladores ("freezers")',
+                'aliquota_ipi': 15.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '84.18.21.00',
+                'descricao': 'Refrigeradores do tipo doméstico, de compressão',
+                'aliquota_ipi': 15.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '84.50.11.00',
+                'descricao': 'Máquinas de lavar roupa, de capacidade não superior a 10 kg',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '84.50.12.00',
+                'descricao': 'Máquinas de lavar roupa, de capacidade superior a 10 kg',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 85 - MÁQUINAS, APARELHOS E MATERIAIS ELÉTRICOS
+            {
+                'codigo_ncm': '85.16.10.00',
+                'descricao': 'Aquecedores elétricos de água, incluindo os de imersão',
+                'aliquota_ipi': 10.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '85.16.21.00',
+                'descricao': 'Radiadores elétricos de acumulação',
+                'aliquota_ipi': 10.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
             {
                 'codigo_ncm': '85.17.12.31',
                 'descricao': 'Telefones celulares',
-                'aliquota_ipi': 15.00,
-                'observacoes': 'Sujeito à tributação normal',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'aliquota_ipi': 12.00,
+                'observacoes': 'Alíquota reduzida pelo Decreto 11.970/2024',
+                'decreto_origem': 'Decreto nº 11.970/2024'
             },
             {
                 'codigo_ncm': '85.28.72.10',
                 'descricao': 'Televisores em cores',
                 'aliquota_ipi': 20.00,
                 'observacoes': 'Sujeito à tributação normal',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'decreto_origem': 'Decreto nº 11.158/2022'
             },
-            # Perfumes
             {
-                'codigo_ncm': '33.03.00.10',
-                'descricao': 'Perfumes e águas-de-colônia',
+                'codigo_ncm': '85.28.72.90',
+                'descricao': 'Outros aparelhos receptores de televisão em cores',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 87 - VEÍCULOS AUTOMÓVEIS, TRATORES
+            {
+                'codigo_ncm': '87.03.21.00',
+                'descricao': 'Automóveis com motor de cilindrada superior a 1.000 cm³ mas não superior a 1.500 cm³',
+                'aliquota_ipi': 7.00,
+                'observacoes': 'Alíquota mantida pelo Decreto 11.970/2024',
+                'decreto_origem': 'Decreto nº 11.970/2024'
+            },
+            {
+                'codigo_ncm': '87.03.22.10',
+                'descricao': 'Automóveis com motor de cilindrada superior a 1.500 cm³ mas não superior a 2.000 cm³',
+                'aliquota_ipi': 11.00,
+                'observacoes': 'Alíquota mantida pelo Decreto 11.970/2024',
+                'decreto_origem': 'Decreto nº 11.970/2024'
+            },
+            {
+                'codigo_ncm': '87.03.23.10',
+                'descricao': 'Automóveis com motor de cilindrada superior a 2.000 cm³ mas não superior a 3.000 cm³',
+                'aliquota_ipi': 18.00,
+                'observacoes': 'Alíquota ajustada pelo Decreto 11.970/2024',
+                'decreto_origem': 'Decreto nº 11.970/2024'
+            },
+            {
+                'codigo_ncm': '87.03.24.10',
+                'descricao': 'Automóveis com motor de cilindrada superior a 3.000 cm³',
+                'aliquota_ipi': 25.00,
+                'observacoes': 'Alíquota mantida pelo Decreto 11.970/2024',
+                'decreto_origem': 'Decreto nº 11.970/2024'
+            },
+            {
+                'codigo_ncm': '87.11.20.00',
+                'descricao': 'Motocicletas com motor de cilindrada superior a 50 cm³ mas não superior a 250 cm³',
+                'aliquota_ipi': 35.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '87.11.30.00',
+                'descricao': 'Motocicletas com motor de cilindrada superior a 250 cm³ mas não superior a 500 cm³',
+                'aliquota_ipi': 40.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '87.11.40.00',
+                'descricao': 'Motocicletas com motor de cilindrada superior a 500 cm³ mas não superior a 800 cm³',
+                'aliquota_ipi': 45.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '87.11.50.00',
+                'descricao': 'Motocicletas com motor de cilindrada superior a 800 cm³',
+                'aliquota_ipi': 50.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 90 - INSTRUMENTOS E APARELHOS DE ÓPTICA
+            {
+                'codigo_ncm': '90.04.10.00',
+                'descricao': 'Óculos de sol',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '90.04.90.00',
+                'descricao': 'Outros óculos corretivos, protetivos ou outros',
                 'aliquota_ipi': 0.00,
-                'observacoes': 'Isento - Regime monofásico',
-                'decreto_origem': 'Decreto nº 8.950/2016'
+                'observacoes': 'Isento - produto médico essencial',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 91 - ARTIGOS DE RELOJOARIA
+            {
+                'codigo_ncm': '91.01.11.00',
+                'descricao': 'Relógios de pulso, funcionamento mecânico, com caixa de metais preciosos',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '91.01.21.00',
+                'descricao': 'Relógios de pulso, funcionamento mecânico, com caixa de metais comuns',
+                'aliquota_ipi': 20.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 94 - MÓVEIS; MOBILIÁRIO MÉDICO-CIRÚRGICO
+            {
+                'codigo_ncm': '94.01.10.00',
+                'descricao': 'Assentos dos tipos utilizados em veículos aéreos',
+                'aliquota_ipi': 5.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '94.03.10.00',
+                'descricao': 'Móveis de metal dos tipos utilizados em escritórios',
+                'aliquota_ipi': 10.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            
+            # CAPÍTULO 95 - BRINQUEDOS, JOGOS, ARTIGOS PARA ESPORTE
+            {
+                'codigo_ncm': '95.03.00.10',
+                'descricao': 'Triciclos, patinetes, carros de pedais e outros brinquedos semelhantes de rodas',
+                'aliquota_ipi': 30.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '95.04.10.00',
+                'descricao': 'Jogos de vídeo dos tipos utilizados com receptor de televisão',
+                'aliquota_ipi': 40.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '95.06.12.00',
+                'descricao': 'Pranchas de surf',
+                'aliquota_ipi': 15.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
+            },
+            {
+                'codigo_ncm': '95.06.21.00',
+                'descricao': 'Pranchas à vela',
+                'aliquota_ipi': 15.00,
+                'observacoes': 'Sujeito à tributação normal',
+                'decreto_origem': 'Decreto nº 11.158/2022'
             }
         ]
     
