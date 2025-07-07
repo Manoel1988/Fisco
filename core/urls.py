@@ -18,8 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
+
+def home_redirect(request):
+    """Redireciona a página inicial para auditoria"""
+    return redirect('auditoria:lista_empresas')
 
 urlpatterns = [
+    path('', home_redirect, name='home'),
     path('admin/', admin.site.urls),
     path('auditoria/', include('auditoria.urls')),
 ]

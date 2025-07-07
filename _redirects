@@ -1,3 +1,16 @@
-/admin/*  /admin/:splat  200
-/auditoria/*  /auditoria/:splat  200
-/*  /auditoria/  200 
+# Redirects para Django no Netlify
+
+# Servir página inicial estática
+/  /index.html  200
+
+# Servir arquivos estáticos diretamente
+/static/*  /static/:splat  200
+/media/*  /media/:splat  200
+
+# Para Django Admin e outras URLs dinâmicas, seria necessário um servidor Python
+# Como o Netlify serve apenas arquivos estáticos, vamos redirecionar para a página inicial
+/admin/*  /index.html  200
+/auditoria/*  /index.html  200
+
+# Fallback - qualquer outra URL vai para a página inicial
+/*  /index.html  200 
