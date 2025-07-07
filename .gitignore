@@ -4,10 +4,10 @@
 *.pyc
 __pycache__/
 local_settings.py
-db.sqlite3
+# db.sqlite3 - Comentado para permitir envio do banco de dados de exemplo
 db.sqlite3-journal
-media/
-staticfiles/
+# media/ - Comentado para permitir envio de arquivos de exemplo
+# staticfiles/ - Comentado para permitir envio de arquivos estáticos
 static/
 
 # Virtual Environment
@@ -82,13 +82,12 @@ pip-delete-this-directory.txt
 *.swp
 *~.nib
 
-# PDF test files
-tipi_exemplo_teste.pdf
-*.pdf
+# PDF test files - Permitir PDFs de exemplo
+# tipi_exemplo_teste.pdf
+# *.pdf
 
-# Logs
-logs/
-*.log
+# Logs - Permitir diretório de logs mas não os arquivos
+logs/*.log
 
 # Database backups
 *.sql
