@@ -1,0 +1,24 @@
+[build]
+  command = "./build.sh"
+  publish = "staticfiles"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+  DJANGO_SETTINGS_MODULE = "core.settings"
+  DEBUG = "False"
+  ALLOWED_HOSTS = "*.netlify.app"
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/auditoria/*"
+  to = "/auditoria/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/auditoria/"
+  status = 200 

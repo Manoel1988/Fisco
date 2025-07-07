@@ -122,6 +122,7 @@ python manage.py carregar_legislacoes_completas
 
 O sistema está pronto para deploy em:
 
+- **Netlify**: `netlify.toml` e `build.sh` configurados
 - **Railway**: `railway.toml` configurado
 - **Render**: `render.yaml` configurado
 - **Docker**: `Dockerfile` e `docker-compose.yml`

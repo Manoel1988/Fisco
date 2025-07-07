@@ -1,0 +1,3 @@
+/admin/*  /admin/:splat  200
+/auditoria/*  /auditoria/:splat  200
+/*  /auditoria/  200 
