@@ -1,0 +1,349 @@
+{% load auditoria_extras %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ legislacao.get_identificacao }} - Fisco</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .badge-esfera {
+            font-size: 0.9em;
+        }
+        .badge-federal { background-color: #007bff; }
+        .badge-estadual { background-color: #28a745; }
+        .badge-municipal { background-color: #ffc107; color: #000; }
+        .badge-relevancia-5 { background-color: #dc3545; }
+        .badge-relevancia-4 { background-color: #fd7e14; }
+        .badge-relevancia-3 { background-color: #ffc107; color: #000; }
+        .badge-relevancia-2 { background-color: #20c997; }
+        .badge-relevancia-1 { background-color: #6c757d; }
+        .info-card {
+            background-color: #f8f9fa;
+            border-radius: 0.375rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .content-section {
+            background-color: white;
+            border-radius: 0.375rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .related-card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+        }
+        .related-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .text-content {
+            line-height: 1.6;
+            text-align: justify;
+        }
+        .keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .keyword-tag {
+            background-color: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'auditoria:lista_empresas' %}">
+                <i class="fas fa-balance-scale"></i> Fisco
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'auditoria:lista_empresas' %}">
+                    <i class="fas fa-building"></i> Empresas
+                </a>
+                <a class="nav-link" href="{% url 'auditoria:legislacoes' %}">
+                    <i class="fas fa-book"></i> Legislações
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'auditoria:lista_empresas' %}">
+                        <i class="fas fa-home"></i> Início
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'auditoria:legislacoes' %}">
+                        <i class="fas fa-book"></i> Legislações
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ legislacao.get_identificacao }}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <!-- Conteúdo Principal -->
+            <div class="col-lg-8">
+                <!-- Cabeçalho -->
+                <div class="content-section">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h1 class="h3 mb-0">{{ legislacao.get_identificacao }}</h1>
+                        <div>
+                            <span class="badge badge-esfera badge-{{ legislacao.esfera|lower }}">
+                                {{ legislacao.get_esfera_display }}
+                            </span>
+                            <span class="badge badge-relevancia-{{ legislacao.relevancia }}">
+                                {% if legislacao.relevancia == 5 %}Essencial
+                                {% elif legislacao.relevancia == 4 %}Crítica
+                                {% elif legislacao.relevancia == 3 %}Alta
+                                {% elif legislacao.relevancia == 2 %}Média
+                                {% else %}Baixa{% endif %}
+                            </span>
+                            {% if legislacao.esta_vigente %}
+                                <span class="badge bg-success">Vigente</span>
+                            {% else %}
+                                <span class="badge bg-danger">Não Vigente</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h2 class="h4 text-muted mb-3">{{ legislacao.titulo }}</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <i class="fas fa-calendar text-muted"></i>
+                                <strong>Data de Publicação:</strong> {{ legislacao.data_publicacao|date:"d/m/Y" }}
+                            </p>
+                            {% if legislacao.data_vigencia %}
+                                <p class="mb-1">
+                                    <i class="fas fa-play-circle text-muted"></i>
+                                    <strong>Vigência:</strong> {{ legislacao.data_vigencia|date:"d/m/Y" }}
+                                </p>
+                            {% endif %}
+                            {% if legislacao.data_revogacao %}
+                                <p class="mb-1">
+                                    <i class="fas fa-stop-circle text-muted"></i>
+                                    <strong>Revogação:</strong> {{ legislacao.data_revogacao|date:"d/m/Y" }}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <i class="fas fa-university text-muted"></i>
+                                <strong>Órgão:</strong> {{ legislacao.get_orgao_display }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-file-alt text-muted"></i>
+                                <strong>Tipo:</strong> {{ legislacao.get_tipo_display }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-tags text-muted"></i>
+                                <strong>Área:</strong> {{ legislacao.get_area_display }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if legislacao.diario_oficial %}
+                        <p class="mt-2">
+                            <i class="fas fa-newspaper text-muted"></i>
+                            <strong>Diário Oficial:</strong> {{ legislacao.diario_oficial }}
+                        </p>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        {% if legislacao.url_oficial %}
+                            <a href="{{ legislacao.url_oficial }}" 
+                               target="_blank" 
+                               class="btn btn-primary">
+                                <i class="fas fa-external-link-alt"></i> Texto Oficial
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'auditoria:legislacoes' %}" 
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar às Legislações
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Ementa -->
+                <div class="content-section">
+                    <h3 class="h5 mb-3">
+                        <i class="fas fa-quote-left"></i> Ementa
+                    </h3>
+                    <p class="text-content">{{ legislacao.ementa }}</p>
+                </div>
+
+                <!-- Resumo -->
+                {% if legislacao.resumo %}
+                    <div class="content-section">
+                        <h3 class="h5 mb-3">
+                            <i class="fas fa-file-text"></i> Resumo Executivo
+                        </h3>
+                        <p class="text-content">{{ legislacao.resumo }}</p>
+                    </div>
+                {% endif %}
+
+                <!-- Texto Completo -->
+                {% if legislacao.texto_completo %}
+                    <div class="content-section">
+                        <h3 class="h5 mb-3">
+                            <i class="fas fa-scroll"></i> Conteúdo Completo
+                        </h3>
+                        <div class="text-content">
+                            {{ legislacao.texto_completo|linebreaks }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Palavras-chave -->
+                {% if legislacao.palavras_chave %}
+                    <div class="content-section">
+                        <h3 class="h5 mb-3">
+                            <i class="fas fa-tags"></i> Palavras-chave
+                        </h3>
+                        <div class="keywords">
+                            {% for palavra in legislacao.palavras_chave|split:"," %}
+                                <span class="keyword-tag">{{ palavra|trim }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Informações Rápidas -->
+                <div class="info-card">
+                    <h4 class="h6 mb-3">
+                        <i class="fas fa-info-circle"></i> Informações Rápidas
+                    </h4>
+                    <div class="row">
+                        <div class="col-12 mb-2">
+                            <strong>Identificação:</strong><br>
+                            {{ legislacao.get_identificacao }}
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>Esfera:</strong><br>
+                            <span class="badge badge-esfera badge-{{ legislacao.esfera|lower }}">
+                                {{ legislacao.get_esfera_display }}
+                            </span>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>Status:</strong><br>
+                            {% if legislacao.esta_vigente %}
+                                <span class="badge bg-success">Vigente</span>
+                            {% else %}
+                                <span class="badge bg-danger">Não Vigente</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-2">
+                            <strong>Relevância:</strong><br>
+                            <span class="badge badge-relevancia-{{ legislacao.relevancia }}">
+                                {% if legislacao.relevancia == 5 %}Essencial
+                                {% elif legislacao.relevancia == 4 %}Crítica
+                                {% elif legislacao.relevancia == 3 %}Alta
+                                {% elif legislacao.relevancia == 2 %}Média
+                                {% else %}Baixa{% endif %}
+                            </span>
+                        </div>
+                        <div class="col-12">
+                            <strong>Última Atualização:</strong><br>
+                            <small class="text-muted">
+                                {{ legislacao.data_atualizacao|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legislações Relacionadas -->
+                {% if relacionadas %}
+                    <div class="info-card">
+                        <h4 class="h6 mb-3">
+                            <i class="fas fa-link"></i> Legislações Relacionadas
+                        </h4>
+                        {% for relacionada in relacionadas %}
+                            <div class="related-card">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'auditoria:detalhes_legislacao' relacionada.id %}" 
+                                       class="text-decoration-none">
+                                        {{ relacionada.get_identificacao }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    {{ relacionada.titulo|truncatechars:60 }}
+                                </small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Legislações Similares -->
+                {% if similares %}
+                    <div class="info-card">
+                        <h4 class="h6 mb-3">
+                            <i class="fas fa-copy"></i> Legislações Similares
+                        </h4>
+                        {% for similar in similares %}
+                            <div class="related-card">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'auditoria:detalhes_legislacao' similar.id %}" 
+                                       class="text-decoration-none">
+                                        {{ similar.get_identificacao }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    {{ similar.titulo|truncatechars:60 }}
+                                </small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Filtros Rápidos -->
+                <div class="info-card">
+                    <h4 class="h6 mb-3">
+                        <i class="fas fa-filter"></i> Filtros Rápidos
+                    </h4>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'auditoria:legislacoes' %}?esfera={{ legislacao.esfera }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-flag"></i> Mesma Esfera
+                        </a>
+                        <a href="{% url 'auditoria:legislacoes' %}?tipo={{ legislacao.tipo }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-file-alt"></i> Mesmo Tipo
+                        </a>
+                        <a href="{% url 'auditoria:legislacoes' %}?area={{ legislacao.area }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-tags"></i> Mesma Área
+                        </a>
+                        <a href="{% url 'auditoria:legislacoes' %}?orgao={{ legislacao.orgao }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-university"></i> Mesmo Órgão
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

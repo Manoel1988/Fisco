@@ -7,6 +7,8 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.conf import settings
+from django.core.paginator import Paginator
+from django.db.models import Q
 from datetime import datetime
 import requests
 import PyPDF2
@@ -14,10 +16,9 @@ from time import sleep
 import re
 import logging
 
-from .models import Empresa, NotaFiscal, DocumentoFiscal, TabelaTIPI, HistoricoAtualizacaoTIPI
+from .models import Empresa, NotaFiscal, DocumentoFiscal, TabelaTIPI, Legislacao
 from .logica_auditoria import auditar_pis_cofins_monofasico, gerar_contexto_tipi_para_ia, auditar_ipi_com_tipi
 from .forms import DocumentoFiscalForm
-from .services.tipi_pdf_extractor import TIPIPDFExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +26,147 @@ logger = logging.getLogger(__name__)
 # auditoria/views.py
 
 def lista_empresas(request):
-    empresas = Empresa.objects.all().order_by('razao_social')
+    empresas = Empresa.objects.all().prefetch_related('documentos_fiscais').order_by('razao_social')
     context = {'empresas': empresas}
     return render(request, 'auditoria/lista_empresas.html', context)
 
+def legislacoes(request):
+    """View para exibir legislações com filtros e categorização"""
+    legislacoes_queryset = Legislacao.objects.filter(ativo=True).prefetch_related('legislacao_relacionada')
+    
+    # Filtros
+    esfera_filtro = request.GET.get('esfera', '')
+    tipo_filtro = request.GET.get('tipo', '')
+    area_filtro = request.GET.get('area', '')
+    orgao_filtro = request.GET.get('orgao', '')
+    relevancia_filtro = request.GET.get('relevancia', '')
+    busca = request.GET.get('busca', '')
+    
+    # Aplicar filtros
+    if esfera_filtro:
+        legislacoes_queryset = legislacoes_queryset.filter(esfera=esfera_filtro)
+    if tipo_filtro:
+        legislacoes_queryset = legislacoes_queryset.filter(tipo=tipo_filtro)
+    if area_filtro:
+        legislacoes_queryset = legislacoes_queryset.filter(area=area_filtro)
+    if orgao_filtro:
+        legislacoes_queryset = legislacoes_queryset.filter(orgao=orgao_filtro)
+    if relevancia_filtro:
+        legislacoes_queryset = legislacoes_queryset.filter(relevancia=relevancia_filtro)
+    if busca:
+        legislacoes_queryset = legislacoes_queryset.filter(
+            Q(titulo__icontains=busca) |
+            Q(ementa__icontains=busca) |
+            Q(palavras_chave__icontains=busca) |
+            Q(numero__icontains=busca)
+        )
+    
+    # Ordenação
+    ordenacao = request.GET.get('ordenacao', '-data_publicacao')
+    legislacoes_queryset = legislacoes_queryset.order_by(ordenacao)
+    
+    # Paginação
+    paginator = Paginator(legislacoes_queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Estatísticas por categoria
+    estatisticas = {
+        'total': Legislacao.objects.filter(ativo=True).count(),
+        'por_esfera': {},
+        'por_tipo': {},
+        'por_area': {},
+        'por_relevancia': {},
+    }
+    
+    for esfera_code, esfera_name in Legislacao.ESFERA_CHOICES:
+        count = Legislacao.objects.filter(ativo=True, esfera=esfera_code).count()
+        estatisticas['por_esfera'][esfera_code] = {'name': esfera_name, 'count': count}
+    
+    for tipo_code, tipo_name in Legislacao.TIPO_CHOICES:
+        count = Legislacao.objects.filter(ativo=True, tipo=tipo_code).count()
+        if count > 0:
+            estatisticas['por_tipo'][tipo_code] = {'name': tipo_name, 'count': count}
+    
+    for area_code, area_name in Legislacao.AREA_CHOICES:
+        count = Legislacao.objects.filter(ativo=True, area=area_code).count()
+        if count > 0:
+            estatisticas['por_area'][area_code] = {'name': area_name, 'count': count}
+    
+    for relevancia in [1, 2, 3, 4, 5]:
+        count = Legislacao.objects.filter(ativo=True, relevancia=relevancia).count()
+        if count > 0:
+            relevancia_names = {1: 'Baixa', 2: 'Média', 3: 'Alta', 4: 'Crítica', 5: 'Essencial'}
+            estatisticas['por_relevancia'][relevancia] = {
+                'name': relevancia_names.get(relevancia, f'Nível {relevancia}'),
+                'count': count
+            }
+    
+    # Opções para os filtros
+    opcoes_filtros = {
+        'esferas': Legislacao.ESFERA_CHOICES,
+        'tipos': [(t, n) for t, n in Legislacao.TIPO_CHOICES if Legislacao.objects.filter(ativo=True, tipo=t).exists()],
+        'areas': [(a, n) for a, n in Legislacao.AREA_CHOICES if Legislacao.objects.filter(ativo=True, area=a).exists()],
+        'orgaos': [(o, n) for o, n in Legislacao.ORGAO_CHOICES if Legislacao.objects.filter(ativo=True, orgao=o).exists()],
+        'relevancias': [(r, n) for r, n in [(1, 'Baixa'), (2, 'Média'), (3, 'Alta'), (4, 'Crítica'), (5, 'Essencial')] if Legislacao.objects.filter(ativo=True, relevancia=r).exists()],
+        'ordenacoes': [
+            ('-data_publicacao', 'Data de Publicação (Mais Recente)'),
+            ('data_publicacao', 'Data de Publicação (Mais Antiga)'),
+            ('-relevancia', 'Relevância (Maior)'),
+            ('relevancia', 'Relevância (Menor)'),
+            ('titulo', 'Título (A-Z)'),
+            ('-titulo', 'Título (Z-A)'),
+        ]
+    }
+    
+    context = {
+        'page_obj': page_obj,
+        'estatisticas': estatisticas,
+        'opcoes_filtros': opcoes_filtros,
+        'filtros_ativos': {
+            'esfera': esfera_filtro,
+            'tipo': tipo_filtro,
+            'area': area_filtro,
+            'orgao': orgao_filtro,
+            'relevancia': relevancia_filtro,
+            'busca': busca,
+            'ordenacao': ordenacao,
+        },
+        'total_resultados': paginator.count,
+    }
+    
+    return render(request, 'auditoria/legislacoes.html', context)
+
+def detalhes_legislacao(request, legislacao_id):
+    """View para exibir detalhes de uma legislação específica"""
+    legislacao = get_object_or_404(
+        Legislacao.objects.prefetch_related('legislacao_relacionada'), 
+        id=legislacao_id
+    )
+    
+    # Legislações relacionadas
+    relacionadas = legislacao.legislacao_relacionada.filter(ativo=True)[:5]
+    
+    # Legislações similares (mesma área e tipo)
+    similares = Legislacao.objects.filter(
+        area=legislacao.area,
+        tipo=legislacao.tipo,
+        ativo=True
+    ).exclude(id=legislacao.id)[:5]
+    
+    context = {
+        'legislacao': legislacao,
+        'relacionadas': relacionadas,
+        'similares': similares,
+    }
+    
+    return render(request, 'auditoria/detalhes_legislacao.html', context)
+
 def detalhes_auditoria(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
+    empresa = get_object_or_404(
+        Empresa.objects.prefetch_related('documentos_fiscais', 'notas_fiscais'), 
+        id=empresa_id
+    )
     resultado_auditoria = empresa.resultado_auditoria if empresa.resultado_auditoria else None
     resultado_ia = empresa.resultado_ia if empresa.resultado_ia else None
 
@@ -146,8 +282,15 @@ def detalhes_auditoria(request, empresa_id):
     documentos_por_tipo_e_periodo = {}
     anos_para_exibir = list(range(2021, 2026)) # De 2021 até 2025 (últimos 5 anos completos até o momento)
     meses = DocumentoFiscal.MES_CHOICES
-    documentos_existentes = DocumentoFiscal.objects.filter(empresa=empresa, ano__in=anos_para_exibir)
+
+    # Otimizar consulta de documentos existentes
+    documentos_existentes = DocumentoFiscal.objects.filter(
+        empresa=empresa, 
+        ano__in=anos_para_exibir
+    ).select_related('empresa')
+
     documentos_map = {(doc.tipo_documento, doc.mes, doc.ano): doc for doc in documentos_existentes}
+
     for tipo_doc_choice_val, tipo_doc_choice_label in DocumentoFiscal.TIPO_DOCUMENTO_CHOICES:
         documentos_por_tipo_e_periodo[tipo_doc_choice_val] = {}
         for ano in anos_para_exibir:
@@ -161,6 +304,7 @@ def detalhes_auditoria(request, empresa_id):
                     'file_url': documento_ja_enviado.arquivo.url if documento_ja_enviado else None,
                     'documento_id': documento_ja_enviado.id if documento_ja_enviado else None
                 }
+
     context = {
         'empresa': empresa,
         'resultado_auditoria': resultado_auditoria,
@@ -192,21 +336,26 @@ def upload_documentos(request, empresa_id):
                     ano=int(ano_doc),
                     defaults={'arquivo': arquivo_doc}
                 )
-                # Mensagem de sucesso (opcional, pode usar o sistema de mensagens do Django)
-                # messages.success(request, f'Documento {documento.get_tipo_documento_display()} de {documento.get_mes_display()}/{documento.ano} enviado com sucesso!')
-                return redirect('upload_documentos', empresa_id=empresa.id) # Redireciona para a mesma página
+                messages.success(request, f'Documento {documento.get_tipo_documento_display()} de {documento.get_mes_display()}/{documento.ano} enviado com sucesso!')
+                return redirect('upload_documentos', empresa_id=empresa.id)
+            except ValueError as e:
+                messages.error(request, f'Erro nos dados fornecidos: {str(e)}')
             except Exception as e:
-                # Mensagem de erro
-                # messages.error(request, f'Erro ao fazer upload do documento: {e}')
-                pass # Tratar erro de forma mais robusta
+                messages.error(request, f'Erro ao fazer upload do documento: {str(e)}')
+        else:
+            messages.error(request, 'Todos os campos são obrigatórios para o upload.')
 
     # Gerar lista de documentos esperados para os últimos 5 anos
     documentos_por_tipo_e_periodo = {}
     anos_para_exibir = list(range(2021, 2026)) # De 2021 até 2025 (últimos 5 anos completos até o momento)
     meses = DocumentoFiscal.MES_CHOICES
 
-    # Recupera documentos já enviados para preencher o status
-    documentos_existentes = DocumentoFiscal.objects.filter(empresa=empresa, ano__in=anos_para_exibir)
+    # Otimizar consulta de documentos existentes
+    documentos_existentes = DocumentoFiscal.objects.filter(
+        empresa=empresa, 
+        ano__in=anos_para_exibir
+    ).select_related('empresa')
+
     documentos_map = {(doc.tipo_documento, doc.mes, doc.ano): doc for doc in documentos_existentes}
 
     for tipo_doc_choice_val, tipo_doc_choice_label in DocumentoFiscal.TIPO_DOCUMENTO_CHOICES:
@@ -367,116 +516,7 @@ def analisar_empresa_ajax(request, empresa_id):
             'valor_ia_recuperacao': valor_ia_recuperacao,
         })
 
-@login_required
-def upload_tipi_pdf(request):
-    """View para upload e processamento de PDF da TIPI"""
-    if request.method == 'POST':
-        if 'pdf_file' not in request.FILES:
-            messages.error(request, 'Nenhum arquivo foi enviado.')
-            return redirect('auditoria:upload_tipi_pdf')
-        
-        pdf_file = request.FILES['pdf_file']
-        
-        # Validar tipo de arquivo
-        if not pdf_file.name.lower().endswith('.pdf'):
-            messages.error(request, 'Apenas arquivos PDF são aceitos.')
-            return redirect('auditoria:upload_tipi_pdf')
-        
-        # Validar tamanho (máximo 50MB)
-        if pdf_file.size > 50 * 1024 * 1024:
-            messages.error(request, 'Arquivo muito grande. Máximo permitido: 50MB.')
-            return redirect('auditoria:upload_tipi_pdf')
-        
-        try:
-            # Processar PDF
-            extractor = TIPIPDFExtractor()
-            extracted_data = extractor.extract_from_pdf(pdf_file)
-            
-            if not extracted_data:
-                messages.warning(request, 'Nenhum dado da TIPI foi encontrado no PDF.')
-                return redirect('auditoria:upload_tipi_pdf')
-            
-            # Importar dados para o banco
-            imported_count, updated_count = import_tipi_data(extracted_data, request.user)
-            
-            # Registrar histórico
-            HistoricoAtualizacaoTIPI.objects.create(
-                usuario=request.user,
-                fonte='Upload PDF',
-                registros_importados=imported_count,
-                registros_atualizados=updated_count,
-                observacoes=f'Arquivo: {pdf_file.name}, Total extraído: {len(extracted_data)}'
-            )
-            
-            messages.success(
-                request, 
-                f'Importação concluída! {imported_count} novos registros e {updated_count} atualizados.'
-            )
-            
-        except Exception as e:
-            logger.error(f"Erro ao processar PDF da TIPI: {str(e)}")
-            messages.error(request, f'Erro ao processar PDF: {str(e)}')
-        
-        return redirect('auditoria:upload_tipi_pdf')
-    
-    # GET - mostrar formulário
-    context = {
-        'total_registros': TabelaTIPI.objects.count(),
-        'ultimo_historico': HistoricoAtualizacaoTIPI.objects.order_by('-data_atualizacao').first()
-    }
-    
-    return render(request, 'auditoria/upload_tipi_pdf.html', context)
 
-def import_tipi_data(extracted_data, user):
-    """
-    Importa dados extraídos do PDF para o banco de dados
-    
-    Returns:
-        tuple: (imported_count, updated_count)
-    """
-    imported_count = 0
-    updated_count = 0
-    
-    with transaction.atomic():
-        for item in extracted_data:
-            try:
-                codigo_ncm = item.get('codigo_ncm')
-                if not codigo_ncm:
-                    continue
-                
-                # Verificar se já existe
-                existing = TabelaTIPI.objects.filter(codigo_ncm=codigo_ncm).first()
-                
-                if existing:
-                    # Atualizar registro existente
-                    existing.descricao = item.get('descricao', existing.descricao)
-                    existing.aliquota_ipi = item.get('aliquota_ipi', existing.aliquota_ipi)
-                    existing.observacoes = item.get('observacoes', existing.observacoes)
-                    existing.decreto_origem = 'Upload PDF - ADE 008/2024'
-                    existing.data_atualizacao = datetime.now()
-                    existing.ativo = True
-                    existing.save()
-                    updated_count += 1
-                    
-                else:
-                    # Criar novo registro
-                    TabelaTIPI.objects.create(
-                        codigo_ncm=codigo_ncm,
-                        descricao=item.get('descricao', ''),
-                        aliquota_ipi=item.get('aliquota_ipi', 0),
-                        observacoes=item.get('observacoes', ''),
-                        decreto_origem='Upload PDF - ADE 008/2024',
-                        vigencia_inicio=datetime.now().date(),
-                        ativo=True
-                    )
-                    imported_count += 1
-                    
-            except Exception as e:
-                logger.error(f"Erro ao importar item {item.get('codigo_ncm')}: {str(e)}")
-                continue
-    
-    logger.info(f"Importação concluída: {imported_count} novos, {updated_count} atualizados")
-    return imported_count, updated_count
 
 # auditoria/views.py
 # ...

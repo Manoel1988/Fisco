@@ -96,22 +96,11 @@
 
 {% block result_list %}
     <div class="tipi-actions">
-        <h3>🔄 Gerenciamento da Tabela TIPI</h3>
-        <p>Gerencie e atualize a Tabela de Incidência do Imposto sobre Produtos Industrializados (TIPI)</p>
+        <h3>📊 Tabela TIPI</h3>
+        <p>Consulte a Tabela de Incidência do Imposto sobre Produtos Industrializados (TIPI) carregada no sistema</p>
         
         <div class="action-buttons">
-            <a href="{% url 'auditoria:upload_tipi_pdf' %}" class="action-btn success">
-                📄 Upload PDF da TIPI
-            </a>
-            
-            <a href="{% url 'admin:auditoria_tabelatipi_atualizar' %}" class="action-btn" 
-               onclick="return confirm('Deseja atualizar a tabela TIPI via webscraping? Esta operação pode demorar alguns minutos.')">
-                🔄 Atualizar via Web
-            </a>
-            
-            <a href="{% url 'admin:auditoria_historicoatualizacaotipi_changelist' %}" class="action-btn secondary">
-                📈 Histórico de Atualizações
-            </a>
+            <!-- Histórico de Atualizações removido -->
         </div>
         
         <div class="stats-summary">

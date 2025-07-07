@@ -1,12 +1,27 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
+import os
+from django.core.exceptions import ValidationError
+
+def validate_file_extension(value):
+    """Valida extensões de arquivo permitidas"""
+    ext = os.path.splitext(value.name)[1].lower()
+    valid_extensions = ['.pdf', '.xml', '.txt', '.csv', '.xlsx', '.xls']
+    if ext not in valid_extensions:
+        raise ValidationError(f'Tipo de arquivo não permitido. Extensões válidas: {", ".join(valid_extensions)}')
+
+def validate_file_size(value):
+    """Valida tamanho máximo do arquivo (50MB)"""
+    filesize = value.size
+    if filesize > 50 * 1024 * 1024:  # 50MB
+        raise ValidationError("O arquivo não pode ser maior que 50MB.")
 
 # Create your models here.
 # auditoria/models.py
 
 class Empresa(models.Model):
-    razao_social = models.CharField(max_length=255, unique=True)
-    cnpj = models.CharField(max_length=18, unique=True) # Formato XX.XXX.XXX/YYYY-ZZ
+    razao_social = models.CharField(max_length=255, unique=True, db_index=True)
+    cnpj = models.CharField(max_length=18, unique=True, db_index=True) # Formato XX.XXX.XXX/YYYY-ZZ
     regime_tributario = models.CharField(
         max_length=20,
         choices=[
@@ -14,14 +29,22 @@ class Empresa(models.Model):
             ('PRESUMIDO', 'Lucro Presumido'),
             ('REAL', 'Lucro Real'),
         ],
-        default='SIMPLES'
+        default='SIMPLES',
+        db_index=True
     )
-    data_cadastro = models.DateTimeField(auto_now_add=True)
+    data_cadastro = models.DateTimeField(auto_now_add=True, db_index=True)
     resultado_auditoria = models.JSONField(null=True, blank=True)
     resultado_ia = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.razao_social} ({self.cnpj})"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['razao_social']),
+            models.Index(fields=['cnpj']),
+            models.Index(fields=['regime_tributario']),
+        ]
 
 class NotaFiscal(models.Model):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='notas_fiscais')
@@ -74,15 +97,24 @@ class DocumentoFiscal(models.Model):
     ]
 
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='documentos_fiscais')
-    tipo_documento = models.CharField(max_length=50, choices=TIPO_DOCUMENTO_CHOICES)
-    mes = models.IntegerField(choices=MES_CHOICES)
-    ano = models.IntegerField()
-    arquivo = models.FileField(upload_to='documentos_fiscais/%Y/%m/') # Organiza por ano/mes
-    data_upload = models.DateTimeField(auto_now_add=True)
+    tipo_documento = models.CharField(max_length=50, choices=TIPO_DOCUMENTO_CHOICES, db_index=True)
+    mes = models.IntegerField(choices=MES_CHOICES, db_index=True)
+    ano = models.IntegerField(db_index=True)
+    arquivo = models.FileField(
+        upload_to='documentos_fiscais/%Y/%m/',
+        validators=[validate_file_extension, validate_file_size]
+    )
+    data_upload = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         unique_together = (('empresa', 'tipo_documento', 'mes', 'ano'),) # Garante unicidade
         ordering = ['ano', 'mes'] # Ordena por ano e mês
+        indexes = [
+            models.Index(fields=['empresa', 'ano']),
+            models.Index(fields=['tipo_documento', 'ano']),
+            models.Index(fields=['ano', 'mes']),
+            models.Index(fields=['data_upload']),
+        ]
 
     def __str__(self):
         return f"{self.get_tipo_documento_display()} - {self.get_mes_display()}/{self.ano} ({self.empresa.razao_social})"
@@ -107,22 +139,119 @@ class TabelaTIPI(models.Model):
     def __str__(self):
         return f"{self.codigo_ncm} - {self.aliquota_ipi}% IPI"
 
-# NOVO MODELO: Histórico de Atualizações TIPI
-class HistoricoAtualizacaoTIPI(models.Model):
-    data_atualizacao = models.DateTimeField(auto_now_add=True)
-    total_registros = models.IntegerField(help_text="Total de registros atualizados")
-    registros_novos = models.IntegerField(help_text="Registros novos adicionados")
-    registros_alterados = models.IntegerField(help_text="Registros existentes alterados")
-    fonte_dados = models.CharField(max_length=255, help_text="URL ou fonte dos dados")
-    usuario = models.CharField(max_length=100, help_text="Usuário que executou a atualização")
-    sucesso = models.BooleanField(default=True)
-    log_detalhes = models.TextField(blank=True, help_text="Log detalhado da atualização")
 
+
+# NOVO MODELO: Legislação
+class Legislacao(models.Model):
+    TIPO_CHOICES = [
+        ('LEI', 'Lei'),
+        ('DECRETO', 'Decreto'),
+        ('INSTRUCAO_NORMATIVA', 'Instrução Normativa'),
+        ('PORTARIA', 'Portaria'),
+        ('RESOLUCAO', 'Resolução'),
+        ('MEDIDA_PROVISORIA', 'Medida Provisória'),
+        ('CONSTITUICAO', 'Constituição'),
+        ('CODIGO', 'Código'),
+        ('CONSOLIDACAO', 'Consolidação'),
+        ('ATO_DECLARATORIO', 'Ato Declaratório'),
+        ('SOLUCAO_CONSULTA', 'Solução de Consulta'),
+        ('PARECER', 'Parecer'),
+    ]
+    
+    AREA_CHOICES = [
+        ('TRIBUTARIO', 'Tributário'),
+        ('FISCAL', 'Fiscal'),
+        ('TRABALHISTA', 'Trabalhista'),
+        ('PREVIDENCIARIO', 'Previdenciário'),
+        ('COMERCIAL', 'Comercial'),
+        ('CIVIL', 'Civil'),
+        ('PENAL', 'Penal'),
+        ('ADMINISTRATIVO', 'Administrativo'),
+        ('CONSTITUCIONAL', 'Constitucional'),
+        ('AMBIENTAL', 'Ambiental'),
+    ]
+    
+    ORGAO_CHOICES = [
+        ('RECEITA_FEDERAL', 'Receita Federal do Brasil'),
+        ('CONGRESSO_NACIONAL', 'Congresso Nacional'),
+        ('PRESIDENCIA', 'Presidência da República'),
+        ('MINISTERIO_FAZENDA', 'Ministério da Fazenda'),
+        ('MINISTERIO_ECONOMIA', 'Ministério da Economia'),
+        ('MINISTERIO_TRABALHO', 'Ministério do Trabalho'),
+        ('INSS', 'Instituto Nacional do Seguro Social'),
+        ('CONFAZ', 'Conselho Nacional de Política Fazendária'),
+        ('CARF', 'Conselho Administrativo de Recursos Fiscais'),
+        ('STF', 'Supremo Tribunal Federal'),
+        ('STJ', 'Superior Tribunal de Justiça'),
+        ('TST', 'Tribunal Superior do Trabalho'),
+        ('TCU', 'Tribunal de Contas da União'),
+        ('SENADO_FEDERAL', 'Senado Federal'),
+        ('OUTROS', 'Outros'),
+    ]
+    
+    ESFERA_CHOICES = [
+        ('FEDERAL', 'Federal'),
+        ('ESTADUAL', 'Estadual'),
+        ('MUNICIPAL', 'Municipal'),
+    ]
+
+    # Campos básicos
+    titulo = models.CharField(max_length=500, help_text="Título da legislação")
+    numero = models.CharField(max_length=50, help_text="Número da legislação")
+    ano = models.IntegerField(help_text="Ano da legislação")
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, help_text="Tipo de legislação")
+    area = models.CharField(max_length=30, choices=AREA_CHOICES, help_text="Área de aplicação")
+    orgao = models.CharField(max_length=30, choices=ORGAO_CHOICES, help_text="Órgão emissor")
+    esfera = models.CharField(max_length=20, choices=ESFERA_CHOICES, default='FEDERAL', help_text="Esfera de competência")
+    
+    # Datas
+    data_publicacao = models.DateField(help_text="Data de publicação")
+    data_vigencia = models.DateField(null=True, blank=True, help_text="Data de início da vigência")
+    data_revogacao = models.DateField(null=True, blank=True, help_text="Data de revogação (se aplicável)")
+    
+    # Conteúdo
+    ementa = models.TextField(help_text="Ementa da legislação")
+    texto_completo = models.TextField(blank=True, help_text="Texto completo da legislação")
+    resumo = models.TextField(blank=True, help_text="Resumo executivo")
+    
+    # Links e referências
+    url_oficial = models.URLField(blank=True, help_text="URL oficial da legislação")
+    diario_oficial = models.CharField(max_length=200, blank=True, help_text="Referência do Diário Oficial")
+    
+    # Relacionamentos
+    legislacao_relacionada = models.ManyToManyField('self', blank=True, symmetrical=False, help_text="Legislações relacionadas")
+    
+    # Metadados
+    palavras_chave = models.TextField(blank=True, help_text="Palavras-chave separadas por vírgula")
+    ativo = models.BooleanField(default=True, help_text="Se a legislação está ativa")
+    relevancia = models.IntegerField(default=3, choices=[(1, 'Baixa'), (2, 'Média'), (3, 'Alta'), (4, 'Crítica')], help_text="Relevância para o sistema")
+    
+    # Controle
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_atualizacao = models.DateTimeField(auto_now=True)
+    
     class Meta:
-        verbose_name = "Histórico de Atualização TIPI"
-        verbose_name_plural = "Históricos de Atualizações TIPI"
-        ordering = ['-data_atualizacao']
-
+        verbose_name = "Legislação"
+        verbose_name_plural = "Legislações"
+        ordering = ['-data_publicacao', '-relevancia']
+        unique_together = [['tipo', 'numero', 'ano', 'orgao']]
+    
     def __str__(self):
-        status = "Sucesso" if self.sucesso else "Falha"
-        return f"Atualização {self.data_atualizacao.strftime('%d/%m/%Y %H:%M')} - {status}"
+        return f"{self.get_tipo_display()} {self.numero}/{self.ano} - {self.titulo[:100]}"
+    
+    def get_identificacao(self):
+        """Retorna identificação completa da legislação"""
+        return f"{self.get_tipo_display()} nº {self.numero}/{self.ano}"
+    
+    def esta_vigente(self):
+        """Verifica se a legislação está vigente"""
+        from datetime import date
+        hoje = date.today()
+        
+        if self.data_revogacao and self.data_revogacao <= hoje:
+            return False
+        
+        if self.data_vigencia and self.data_vigencia > hoje:
+            return False
+            
+        return self.ativo

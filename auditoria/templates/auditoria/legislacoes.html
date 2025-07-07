@@ -1,0 +1,412 @@
+{% load auditoria_extras %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legislações Tributárias - Fisco</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-legislacao {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #007bff;
+        }
+        .card-legislacao:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .badge-esfera {
+            font-size: 0.8em;
+        }
+        .badge-federal { background-color: #007bff; }
+        .badge-estadual { background-color: #28a745; }
+        .badge-municipal { background-color: #ffc107; color: #000; }
+        .badge-relevancia-5 { background-color: #dc3545; }
+        .badge-relevancia-4 { background-color: #fd7e14; }
+        .badge-relevancia-3 { background-color: #ffc107; color: #000; }
+        .badge-relevancia-2 { background-color: #20c997; }
+        .badge-relevancia-1 { background-color: #6c757d; }
+        .filters-sidebar {
+            background-color: #f8f9fa;
+            border-radius: 0.375rem;
+            padding: 1.5rem;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        .clear-filters {
+            background-color: #6c757d;
+            border: none;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        .clear-filters:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'auditoria:lista_empresas' %}">
+                <i class="fas fa-balance-scale"></i> Fisco
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'auditoria:lista_empresas' %}">
+                    <i class="fas fa-building"></i> Empresas
+                </a>
+                <a class="nav-link active" href="{% url 'auditoria:legislacoes' %}">
+                    <i class="fas fa-book"></i> Legislações
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar de Filtros -->
+            <div class="col-md-3">
+                <div class="filters-sidebar">
+                    <h5 class="mb-3">
+                        <i class="fas fa-filter"></i> Filtros
+                        {% if filtros_ativos.esfera or filtros_ativos.tipo or filtros_ativos.area or filtros_ativos.orgao or filtros_ativos.relevancia or filtros_ativos.busca %}
+                            <a href="{% url 'auditoria:legislacoes' %}" class="clear-filters ms-2">
+                                <i class="fas fa-times"></i> Limpar
+                            </a>
+                        {% endif %}
+                    </h5>
+                    
+                    <form method="get" id="filtros-form">
+                        <!-- Busca -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-search"></i> Buscar
+                            </label>
+                            <input type="text" class="form-control" name="busca" 
+                                   value="{{ filtros_ativos.busca }}" 
+                                   placeholder="Título, ementa, palavras-chave...">
+                        </div>
+
+                        <!-- Esfera -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-flag"></i> Esfera
+                            </label>
+                            <select class="form-select" name="esfera">
+                                <option value="">Todas</option>
+                                {% for codigo, nome in opcoes_filtros.esferas %}
+                                    <option value="{{ codigo }}" {% if filtros_ativos.esfera == codigo %}selected{% endif %}>
+                                        {{ nome }} ({{ estatisticas.por_esfera|default_if_none:0 }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Tipo -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-file-alt"></i> Tipo
+                            </label>
+                            <select class="form-select" name="tipo">
+                                <option value="">Todos</option>
+                                {% for codigo, nome in opcoes_filtros.tipos %}
+                                    <option value="{{ codigo }}" {% if filtros_ativos.tipo == codigo %}selected{% endif %}>
+                                        {{ nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Área -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-tags"></i> Área
+                            </label>
+                            <select class="form-select" name="area">
+                                <option value="">Todas</option>
+                                {% for codigo, nome in opcoes_filtros.areas %}
+                                    <option value="{{ codigo }}" {% if filtros_ativos.area == codigo %}selected{% endif %}>
+                                        {{ nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Órgão -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-university"></i> Órgão
+                            </label>
+                            <select class="form-select" name="orgao">
+                                <option value="">Todos</option>
+                                {% for codigo, nome in opcoes_filtros.orgaos %}
+                                    <option value="{{ codigo }}" {% if filtros_ativos.orgao == codigo %}selected{% endif %}>
+                                        {{ nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Relevância -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-star"></i> Relevância
+                            </label>
+                            <select class="form-select" name="relevancia">
+                                <option value="">Todas</option>
+                                {% for codigo, nome in opcoes_filtros.relevancias %}
+                                    <option value="{{ codigo }}" {% if filtros_ativos.relevancia == codigo|stringformat:"s" %}selected{% endif %}>
+                                        {{ nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Ordenação -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-sort"></i> Ordenar por
+                            </label>
+                            <select class="form-select" name="ordenacao">
+                                {% for codigo, nome in opcoes_filtros.ordenacoes %}
+                                    <option value="{{ codigo }}" {% if filtros_ativos.ordenacao == codigo %}selected{% endif %}>
+                                        {{ nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Estatísticas -->
+                <div class="stat-card mt-3">
+                    <h6 class="mb-2">
+                        <i class="fas fa-chart-bar"></i> Estatísticas
+                    </h6>
+                    <div class="stat-item">
+                        <span>Total de Legislações:</span>
+                        <strong>{{ estatisticas.total }}</strong>
+                    </div>
+                    {% for esfera, dados in estatisticas.por_esfera.items %}
+                        {% if dados.count > 0 %}
+                            <div class="stat-item">
+                                <span>{{ dados.name }}:</span>
+                                <strong>{{ dados.count }}</strong>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Conteúdo Principal -->
+            <div class="col-md-9">
+                <!-- Cabeçalho -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>
+                        <i class="fas fa-book"></i> Legislações Tributárias
+                        <small class="text-muted">({{ total_resultados }} encontradas)</small>
+                    </h2>
+                </div>
+
+                <!-- Filtros Ativos -->
+                {% if filtros_ativos.esfera or filtros_ativos.tipo or filtros_ativos.area or filtros_ativos.orgao or filtros_ativos.relevancia or filtros_ativos.busca %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Filtros ativos:
+                        {% if filtros_ativos.busca %}
+                            <span class="badge bg-secondary">Busca: "{{ filtros_ativos.busca }}"</span>
+                        {% endif %}
+                        {% if filtros_ativos.esfera %}
+                            <span class="badge bg-secondary">Esfera: {{ filtros_ativos.esfera }}</span>
+                        {% endif %}
+                        {% if filtros_ativos.tipo %}
+                            <span class="badge bg-secondary">Tipo: {{ filtros_ativos.tipo }}</span>
+                        {% endif %}
+                        {% if filtros_ativos.area %}
+                            <span class="badge bg-secondary">Área: {{ filtros_ativos.area }}</span>
+                        {% endif %}
+                        {% if filtros_ativos.orgao %}
+                            <span class="badge bg-secondary">Órgão: {{ filtros_ativos.orgao }}</span>
+                        {% endif %}
+                        {% if filtros_ativos.relevancia %}
+                            <span class="badge bg-secondary">Relevância: {{ filtros_ativos.relevancia }}</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- Lista de Legislações -->
+                {% if page_obj %}
+                    <div class="row">
+                        {% for legislacao in page_obj %}
+                            <div class="col-12 mb-3">
+                                <div class="card card-legislacao">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="card-title mb-0">
+                                                <a href="{% url 'auditoria:detalhes_legislacao' legislacao.id %}" 
+                                                   class="text-decoration-none">
+                                                    {{ legislacao.get_identificacao }}
+                                                </a>
+                                            </h5>
+                                            <div>
+                                                <span class="badge badge-esfera badge-{{ legislacao.esfera|lower }}">
+                                                    {{ legislacao.get_esfera_display }}
+                                                </span>
+                                                <span class="badge badge-relevancia-{{ legislacao.relevancia }}">
+                                                    {% if legislacao.relevancia == 5 %}Essencial
+                                                    {% elif legislacao.relevancia == 4 %}Crítica
+                                                    {% elif legislacao.relevancia == 3 %}Alta
+                                                    {% elif legislacao.relevancia == 2 %}Média
+                                                    {% else %}Baixa{% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            {{ legislacao.titulo|truncatechars:100 }}
+                                        </h6>
+                                        
+                                        <p class="card-text">
+                                            {{ legislacao.ementa|truncatechars:200 }}
+                                        </p>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar"></i> 
+                                                    {{ legislacao.data_publicacao|date:"d/m/Y" }}
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-university"></i> 
+                                                    {{ legislacao.get_orgao_display }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            <span class="badge bg-light text-dark">
+                                                {{ legislacao.get_tipo_display }}
+                                            </span>
+                                            <span class="badge bg-light text-dark">
+                                                {{ legislacao.get_area_display }}
+                                            </span>
+                                            {% if legislacao.esta_vigente %}
+                                                <span class="badge bg-success">Vigente</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Não Vigente</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <a href="{% url 'auditoria:detalhes_legislacao' legislacao.id %}" 
+                                               class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye"></i> Ver Detalhes
+                                            </a>
+                                            {% if legislacao.url_oficial %}
+                                                <a href="{{ legislacao.url_oficial }}" 
+                                                   target="_blank" 
+                                                   class="btn btn-outline-secondary btn-sm">
+                                                    <i class="fas fa-external-link-alt"></i> Texto Oficial
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Paginação -->
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="Paginação">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.esfera %}&esfera={{ request.GET.esfera }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}{% if request.GET.orgao %}&orgao={{ request.GET.orgao }}{% endif %}{% if request.GET.relevancia %}&relevancia={{ request.GET.relevancia }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}{% if request.GET.ordenacao %}&ordenacao={{ request.GET.ordenacao }}{% endif %}">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.esfera %}&esfera={{ request.GET.esfera }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}{% if request.GET.orgao %}&orgao={{ request.GET.orgao }}{% endif %}{% if request.GET.relevancia %}&relevancia={{ request.GET.relevancia }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}{% if request.GET.ordenacao %}&ordenacao={{ request.GET.ordenacao }}{% endif %}">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if request.GET.esfera %}&esfera={{ request.GET.esfera }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}{% if request.GET.orgao %}&orgao={{ request.GET.orgao }}{% endif %}{% if request.GET.relevancia %}&relevancia={{ request.GET.relevancia }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}{% if request.GET.ordenacao %}&ordenacao={{ request.GET.ordenacao }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.esfera %}&esfera={{ request.GET.esfera }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}{% if request.GET.orgao %}&orgao={{ request.GET.orgao }}{% endif %}{% if request.GET.relevancia %}&relevancia={{ request.GET.relevancia }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}{% if request.GET.ordenacao %}&ordenacao={{ request.GET.ordenacao }}{% endif %}">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.esfera %}&esfera={{ request.GET.esfera }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.area %}&area={{ request.GET.area }}{% endif %}{% if request.GET.orgao %}&orgao={{ request.GET.orgao }}{% endif %}{% if request.GET.relevancia %}&relevancia={{ request.GET.relevancia }}{% endif %}{% if request.GET.busca %}&busca={{ request.GET.busca }}{% endif %}{% if request.GET.ordenacao %}&ordenacao={{ request.GET.ordenacao }}{% endif %}">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Nenhuma legislação encontrada com os filtros aplicados.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-submit do formulário quando os filtros mudarem
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('filtros-form');
+            const selects = form.querySelectorAll('select');
+            
+            selects.forEach(select => {
+                select.addEventListener('change', function() {
+                    form.submit();
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

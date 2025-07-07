@@ -15,37 +15,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
-# Fisco/core/urls.py
-
-from django.contrib import admin
-from django.urls import path, include
-from django.conf import settings # Importe settings
-from django.conf.urls.static import static # Importe static
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('auditoria.urls')),
-]
-
-# Apenas para servir arquivos de mídia durante o DESENVOLVIMENTO
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-# Fisco/core/urls.py
-
-from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('auditoria.urls')), # Esta linha
+    path('auditoria/', include('auditoria.urls')),
 ]
 
+# Apenas para servir arquivos de mídia durante o DESENVOLVIMENTO
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

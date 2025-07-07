@@ -1,7 +1,6 @@
 # auditoria/logica_auditoria.py
 
 from .models import Empresa, NotaFiscal, TabelaTIPI
-from .services.tipi_service import TIPIService
 from django.db.models import Sum
 import re
 
@@ -83,7 +82,6 @@ def auditar_ipi_com_tipi(empresa_id):
     Nova função de auditoria que utiliza a tabela TIPI para análise de IPI
     """
     empresa = Empresa.objects.get(id=empresa_id)
-    tipi_service = TIPIService()
     
     notas_da_empresa = NotaFiscal.objects.filter(empresa=empresa)
     
@@ -97,14 +95,14 @@ def auditar_ipi_com_tipi(empresa_id):
             codigos_ncm = extrair_codigos_ncm(nota.descricao_produtos)
             
             for codigo_ncm in codigos_ncm:
-                # Consultar tabela TIPI
-                item_tipi = tipi_service.consultar_tipi(codigo_ncm)
+                # Consultar tabela TIPI diretamente
+                item_tipi = TabelaTIPI.objects.filter(codigo_ncm=codigo_ncm, ativo=True).first()
                 
                 if item_tipi:
                     # Verificar se há IPI aplicável
                     if item_tipi.aliquota_ipi > 0:
                         # Calcular potencial de auditoria de IPI
-                        valor_ipi_calculado = float(nota.valor_total) * (item_tipi.aliquota_ipi / 100)
+                        valor_ipi_calculado = float(nota.valor_total) * (float(item_tipi.aliquota_ipi) / 100)
                         valor_ipi_declarado = float(nota.valor_icms or 0)  # Assumindo que IPI pode estar no campo ICMS
                         
                         diferenca = valor_ipi_calculado - valor_ipi_declarado
@@ -118,7 +116,7 @@ def auditar_ipi_com_tipi(empresa_id):
                                 'valor_total': nota.valor_total,
                                 'codigo_ncm': codigo_ncm,
                                 'descricao_tipi': item_tipi.descricao,
-                                'aliquota_tipi': item_tipi.aliquota_ipi,
+                                'aliquota_tipi': float(item_tipi.aliquota_ipi),
                                 'ipi_calculado': round(valor_ipi_calculado, 2),
                                 'ipi_declarado': round(valor_ipi_declarado, 2),
                                 'diferenca': round(diferenca, 2)
@@ -190,8 +188,7 @@ def gerar_contexto_tipi_para_ia(empresa_id):
             codigos_ncm = extrair_codigos_ncm(nota.descricao_produtos)
             
             for codigo_ncm in codigos_ncm:
-                tipi_service = TIPIService()
-                item_tipi = tipi_service.consultar_tipi(codigo_ncm)
+                item_tipi = TabelaTIPI.objects.filter(codigo_ncm=codigo_ncm, ativo=True).first()
                 
                 if item_tipi:
                     contexto_tipi['produtos_identificados'].append({
