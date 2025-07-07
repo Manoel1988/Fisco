@@ -1,0 +1,24 @@
+# Dockerfile ultra-simples para Railway
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instalar dependências básicas
+RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+
+# Copiar e instalar requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar aplicação
+COPY . .
+
+# Preparar ambiente
+RUN mkdir -p staticfiles media
+RUN chmod +x start-railway-minimal.sh
+
+# Porta
+EXPOSE 8000
+
+# Comando
+CMD ["./start-railway-minimal.sh"] 

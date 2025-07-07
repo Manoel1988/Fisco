@@ -1,5 +1,5 @@
 [build]
-builder = "dockerfile"
+builder = "heroku/buildpacks:20"
 
 [deploy]
 startCommand = "./start-railway-minimal.sh"

@@ -1,0 +1,44 @@
+# Arquivos e diretórios a serem ignorados no build Docker
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+.env
+.venv
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+.DS_Store
+node_modules/
+npm-debug.log
+yarn-error.log
+.idea/
+.vscode/
+*.log
+logs/
+staticfiles/
+media/
+db.sqlite3
+*.sqlite3
+
+# Arquivos de documentação
+*.md
+docs/
+
+# Arquivos de configuração local
+.python-version
+runtime.txt
+netlify.toml
+netlify-*.toml
+build*.sh
+NETLIFY_*.md
+
+# Arquivos temporários
+*.tmp
+*.temp
+.cache/ 

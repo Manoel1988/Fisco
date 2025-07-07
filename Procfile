@@ -1,2 +1,2 @@
-web: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
-release: python manage.py migrate 
+web: ./start-railway-minimal.sh
+release: python manage.py migrate --noinput --settings=railway_settings_minimal 
