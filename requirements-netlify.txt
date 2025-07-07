@@ -1,0 +1,19 @@
+# Dependências essenciais para Netlify
+Django==5.1.4
+gunicorn==21.2.0
+whitenoise==6.6.0
+python-decouple==3.8
+dj-database-url==2.1.0
+
+# Dependências básicas
+requests==2.31.0
+pillow==10.2.0
+beautifulsoup4==4.12.3
+markdown==3.5.2
+
+# Dependências de desenvolvimento (opcionais)
+bleach==6.1.0
+six==1.16.0
+sqlparse==0.4.4
+tzdata==2023.4
+asgiref==3.7.2 

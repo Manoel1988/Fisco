@@ -1,12 +1,11 @@
 [build]
-  command = "./build.sh"
+  command = "./build-minimal.sh"
   publish = "staticfiles"
 
 [build.environment]
   PYTHON_VERSION = "3.11"
-  DJANGO_SETTINGS_MODULE = "core.settings"
+  DJANGO_SETTINGS_MODULE = "netlify_settings"
   DEBUG = "False"
-  ALLOWED_HOSTS = "*.netlify.app"
 
 [[redirects]]
   from = "/admin/*"

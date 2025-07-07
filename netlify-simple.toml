@@ -1,0 +1,11 @@
+[build]
+  command = "./build-netlify.sh"
+  publish = "staticfiles"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+  PIP_UPGRADE = "true"
+  
+[context.production.environment]
+  DEBUG = "False"
+  DJANGO_SETTINGS_MODULE = "core.settings" 
