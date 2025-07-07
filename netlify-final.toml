@@ -1,0 +1,53 @@
+# Configuração final do Netlify - múltiplas opções de build
+
+[build]
+  command = "./build-universal.sh"
+  publish = "staticfiles"
+
+[build.environment]
+  DJANGO_SETTINGS_MODULE = "netlify_settings"
+  DEBUG = "False"
+  # Não especificar versão do Python - usar a disponível
+
+# Configuração para contexto de produção
+[context.production]
+  command = "./build-universal.sh"
+  
+[context.production.environment]
+  DEBUG = "False"
+  DJANGO_SETTINGS_MODULE = "netlify_settings"
+
+# Configuração para branch deploy
+[context.branch-deploy]
+  command = "./build-fallback.sh"
+
+# Configuração para deploy previews
+[context.deploy-preview]
+  command = "./build-fallback.sh"
+
+# Redirects para Django
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/auditoria/*"
+  to = "/auditoria/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/auditoria/"
+  status = 200
+
+# Headers para arquivos estáticos
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/media/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000" 

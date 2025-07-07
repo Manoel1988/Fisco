@@ -1,9 +1,8 @@
 [build]
-  command = "./build-minimal.sh"
+  command = "./build-universal.sh"
   publish = "staticfiles"
 
 [build.environment]
-  PYTHON_VERSION = "3.11"
   DJANGO_SETTINGS_MODULE = "netlify_settings"
   DEBUG = "False"
 

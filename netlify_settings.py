@@ -1,16 +1,16 @@
-# Configurações Django específicas para Netlify
+# Configurações Django ultra-simplificadas para Netlify
 import os
 from pathlib import Path
 
-# Build paths
+# Diretório base
 BASE_DIR = Path(__file__).resolve().parent
 
-# Security
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-netlify-key-change-in-production')
+# Configurações de segurança
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-netlify-change-this-key-in-production')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = ['*']  # Netlify gerencia isso
+ALLOWED_HOSTS = ['*']
 
-# Application definition
+# Apps instalados (mínimo necessário)
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'auditoria',
 ]
 
+# Middleware (mínimo necessário)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -32,8 +33,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# URLs
 ROOT_URLCONF = 'core.urls'
 
+# Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -49,7 +52,7 @@ TEMPLATES = [
     },
 ]
 
-# Database
+# Banco de dados
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -57,28 +60,28 @@ DATABASES = {
     }
 }
 
-# Static files
+# Arquivos estáticos
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
+# Arquivos de media
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Internationalization
+# Internacionalização
 LANGUAGE_CODE = 'pt-br'
-TIME_ZONE = 'America/Sao_Paulo'
+TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Default primary key field type
+# Chave primária padrão
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# DeepSeek API
-DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', '')
-
-# Upload settings
+# Configurações de upload
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800   # 50MB
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
+
+# API DeepSeek (opcional)
+DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', '') 
