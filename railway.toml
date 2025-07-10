@@ -1,14 +1,15 @@
 [build]
-builder = "dockerfile"
+builder = "nixpacks"
 
 [deploy]
-startCommand = "./start-railway-minimal.sh"
+startCommand = "./start-railway.sh"
 healthcheckPath = "/"
-healthcheckTimeout = 120
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 2
+restartPolicyMaxRetries = 3
 
 [variables]
-DJANGO_SETTINGS_MODULE = "railway_settings_minimal"
+DJANGO_SETTINGS_MODULE = "railway_settings"
 DEBUG = "False"
-PYTHONUNBUFFERED = "1" 
+PYTHONUNBUFFERED = "1"
+PORT = "8000" 

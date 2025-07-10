@@ -18,7 +18,20 @@ import logging
 
 from .models import Empresa, NotaFiscal, DocumentoFiscal, TabelaTIPI, Legislacao
 from .logica_auditoria import auditar_pis_cofins_monofasico, gerar_contexto_tipi_para_ia, auditar_ipi_com_tipi
-from .forms import DocumentoFiscalForm
+from .forms import DocumentoFiscalForm, EmpresaForm
+
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import io
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -467,11 +480,81 @@ def analisar_empresa_ajax(request, empresa_id):
         try:
             import requests
             from django.conf import settings
-            prompt = f"Audite os documentos fiscais abaixo e aponte possíveis valores pagos de forma errada ao governo, considerando os últimos 5 anos. Liste inconsistências e explique o motivo.\nDocumentos:\n" + "\n\n".join(documentos_texto)
+            
+            # Verificar se a chave da API está configurada
+            api_key = getattr(settings, 'DEEPSEEK_API_KEY', '')
+            if not api_key or api_key == 'sk-demo-key-for-testing':
+                # Resposta de demonstração quando a API não está configurada
+                resultado_ia = f"""
+# 📋 Análise Fiscal - Empresa: {empresa.razao_social}
+
+## ⚠️ **Modo Demonstração**
+Esta é uma análise simulada pois a chave da API DeepSeek não está configurada.
+
+## 🔍 **Análise dos Documentos Fiscais**
+
+### **Possíveis Inconsistências Identificadas:**
+
+#### 1. **PIS/COFINS - Regime de Apuração**
+- **Valor estimado de recuperação**: R$ 15.750,00
+- **Motivo**: Possível pagamento indevido de PIS/COFINS no regime cumulativo quando poderia ser não-cumulativo
+- **Base legal**: Lei 10.833/2003
+
+#### 2. **IPI - Classificação Fiscal**
+- **Valor estimado de recuperação**: R$ 8.200,00
+- **Motivo**: Possível aplicação de alíquota incorreta baseada na classificação NCM
+- **Base legal**: Tabela TIPI 2024
+
+#### 3. **ICMS - Créditos Não Aproveitados**
+- **Valor estimado de recuperação**: R$ 12.300,00
+- **Motivo**: Créditos de ICMS nas aquisições que podem não ter sido aproveitados adequadamente
+- **Base legal**: Lei Complementar 87/96
+
+### **💰 Total Estimado de Recuperação: R$ 36.250,00**
+
+### **📋 Próximos Passos Recomendados:**
+1. Análise detalhada dos documentos por especialista
+2. Verificação da classificação fiscal dos produtos
+3. Revisão do regime de apuração do PIS/COFINS
+4. Análise dos créditos de ICMS disponíveis
+
+---
+
+**Para usar a análise real com IA, configure sua chave da API DeepSeek no arquivo .env**
+"""
+                return JsonResponse({
+                    'progresso': 100,
+                    'finalizado': True,
+                    'total_recuperar': 36250.00,
+                    'resultados_parciais': resultados_parciais,
+                    'relatorio': f"Total recuperável (simulado): R$ 36.250,00",
+                    'resultado_ia': resultado_ia,
+                    'resultado_auditoria': resultado_auditoria,
+                    'valor_ia_recuperacao': 36250.00,
+                })
+            
+            # Se a chave está configurada, fazer a chamada real
+            contexto_empresa = gerar_contexto_empresa_detalhado(empresa)
+            prompt = f"""Audite os documentos fiscais abaixo e aponte possíveis valores pagos de forma errada ao governo, considerando os últimos 5 anos. 
+            
+Com base nas informações da empresa, identifique oportunidades específicas de recuperação fiscal.
+
+{contexto_empresa}
+
+Documentos para análise:
+{"\n\n".join(documentos_texto)}
+
+Instruções:
+1. Considere o regime tributário e setor da empresa
+2. Identifique oportunidades baseadas nas características específicas da empresa
+3. Aponte inconsistências e explique o motivo
+4. Sugira valores estimados de recuperação quando possível
+5. Priorize oportunidades com maior potencial de recuperação
+"""
             response = requests.post(
                 "https://api.deepseek.com/v1/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 },
                 json={
@@ -522,3 +605,403 @@ def analisar_empresa_ajax(request, empresa_id):
 # ...
 from .logica_auditoria import auditar_pis_cofins_monofasico # Linha 9 ou próxima
 # ...
+
+def gerar_pdf_analise(request, empresa_id):
+    """Gera PDF da análise fiscal da empresa"""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    
+    # Criar buffer de memória para o PDF
+    buffer = io.BytesIO()
+    
+    # Criar documento PDF
+    pdf_doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=18
+    )
+    
+    # Preparar estilos
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#764ba2')
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=12,
+        textColor=colors.HexColor('#2c3e50')
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomBody',
+        parent=styles['Normal'],
+        fontSize=11,
+        spaceAfter=6,
+        alignment=TA_JUSTIFY
+    ))
+    
+    # Conteúdo do PDF
+    story = []
+    
+    # Título
+    story.append(Paragraph("📋 RELATÓRIO DE ANÁLISE FISCAL", styles['CustomTitle']))
+    story.append(Spacer(1, 20))
+    
+    # Informações da empresa
+    empresa_info = f"""
+    <b>Empresa:</b> {empresa.razao_social}<br/>
+    <b>CNPJ:</b> {empresa.cnpj}<br/>
+    <b>Regime Tributário:</b> {empresa.get_regime_tributario_display()}<br/>
+    <b>Data da Análise:</b> {datetime.now().strftime('%d/%m/%Y às %H:%M')}<br/>
+    """
+    story.append(Paragraph(empresa_info, styles['CustomBody']))
+    story.append(Spacer(1, 20))
+    
+    # Resultado da análise
+    story.append(Paragraph("🔍 ANÁLISE DETALHADA", styles['CustomHeading']))
+    
+    if empresa.resultado_ia:
+        try:
+            # Limpar e preparar o texto da análise para PDF
+            import re
+            texto_analise = str(empresa.resultado_ia)
+            
+            # Remover caracteres problemáticos mas manter a formatação
+            texto_analise = texto_analise.replace('"', "'")
+            texto_analise = texto_analise.replace('&', 'e')
+            texto_analise = re.sub(r'[{}[\]<>]', '', texto_analise)
+            
+            # Dividir em seções por quebras de linha duplas
+            secoes = texto_analise.split('\n\n')
+            
+            for secao in secoes:
+                if secao.strip():
+                    # Verificar se é um título (começa com #)
+                    if secao.strip().startswith('#'):
+                        titulo = secao.replace('#', '').strip()
+                        if titulo:
+                            story.append(Paragraph(titulo, styles['CustomHeading']))
+                    else:
+                        # Texto normal - dividir em parágrafos menores se muito longo
+                        linhas = secao.split('\n')
+                        paragrafo_atual = ""
+                        
+                        for linha in linhas:
+                            if linha.strip():
+                                paragrafo_atual += linha + " "
+                                # Se o parágrafo ficar muito longo, criar um novo
+                                if len(paragrafo_atual) > 800:
+                                    story.append(Paragraph(paragrafo_atual.strip(), styles['CustomBody']))
+                                    story.append(Spacer(1, 6))
+                                    paragrafo_atual = ""
+                        
+                        # Adicionar o último parágrafo se houver
+                        if paragrafo_atual.strip():
+                            story.append(Paragraph(paragrafo_atual.strip(), styles['CustomBody']))
+                    
+                    story.append(Spacer(1, 10))
+                    
+        except Exception as e:
+            # Em caso de erro, mostrar mensagem informativa
+            story.append(Paragraph("Erro ao processar o texto da análise para PDF.", styles['CustomBody']))
+            story.append(Paragraph("A análise completa está disponível na interface web do sistema.", styles['CustomBody']))
+    else:
+        story.append(Paragraph("Nenhuma análise foi realizada para esta empresa ainda.", styles['CustomBody']))
+        story.append(Paragraph("Execute uma análise na interface web para gerar o relatório completo.", styles['CustomBody']))
+    
+    story.append(Spacer(1, 30))
+    
+    # Rodapé
+    rodape = f"""
+    <br/><br/>
+    <i>Relatório gerado pelo Sistema Fisco - Auditoria Fiscal Inteligente<br/>
+    Data/Hora: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}</i>
+    """
+    story.append(Paragraph(rodape, styles['CustomBody']))
+    
+    # Gerar PDF
+    pdf_doc.build(story)
+    
+    # Retornar resposta HTTP
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="analise_fiscal_{empresa.cnpj.replace(".", "").replace("/", "").replace("-", "")}_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf"'
+    
+    return response
+
+def excluir_empresa(request, empresa_id):
+    """Exclui uma empresa e todos os seus dados relacionados"""
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    
+    if request.method == 'POST':
+        razao_social = empresa.razao_social
+        # Excluir empresa (cascata exclui documentos relacionados)
+        empresa.delete()
+        messages.success(request, f'Empresa "{razao_social}" foi excluída com sucesso.')
+        return redirect('auditoria:lista_empresas')
+    
+    # Se não for POST, redirecionar para detalhes
+    return redirect('auditoria:detalhes_auditoria', empresa_id=empresa_id)
+
+def gerar_contexto_empresa_detalhado(empresa):
+    """Gera contexto detalhado da empresa para análise da IA"""
+    contexto = f"""
+INFORMAÇÕES DETALHADAS DA EMPRESA:
+
+Dados Básicos:
+- Razão Social: {empresa.razao_social}
+- CNPJ: {empresa.cnpj}
+- Regime Tributário: {empresa.get_regime_tributario_display()}
+"""
+    
+    # Adicionar informações apenas se preenchidas
+    if empresa.atividade_principal:
+        contexto += f"- Atividade Principal: {empresa.atividade_principal}\n"
+    
+    if empresa.cnae_principal:
+        contexto += f"- CNAE Principal: {empresa.cnae_principal}\n"
+    
+    if empresa.setor_atuacao:
+        contexto += f"- Setor de Atuação: {empresa.get_setor_atuacao_display()}\n"
+    
+    if empresa.principais_ncm:
+        contexto += f"- Principais NCM: {empresa.principais_ncm}\n"
+    
+    if empresa.produtos_principais:
+        contexto += f"- Principais Produtos: {empresa.produtos_principais}\n"
+    
+    if empresa.faturamento_anual:
+        contexto += f"- Faturamento Anual: {empresa.get_faturamento_anual_display()}\n"
+    
+    if empresa.numero_funcionarios:
+        contexto += f"- Número de Funcionários: {empresa.get_numero_funcionarios_display()}\n"
+    
+    if empresa.regime_apuracao:
+        contexto += f"- Regime de Apuração: {empresa.get_regime_apuracao_display()}\n"
+    
+    # Características operacionais
+    if empresa.estados_operacao:
+        contexto += f"- Estados de Operação: {empresa.estados_operacao}\n"
+    
+    if empresa.tem_filiais:
+        contexto += "- Possui filiais\n"
+    
+    if empresa.exporta:
+        contexto += "- Realiza exportações\n"
+    
+    if empresa.importa:
+        contexto += "- Realiza importações\n"
+    
+    # Benefícios fiscais
+    if empresa.tem_beneficios_fiscais:
+        contexto += "- Possui benefícios fiscais"
+        if empresa.quais_beneficios:
+            contexto += f": {empresa.quais_beneficios}\n"
+        else:
+            contexto += "\n"
+    
+    # Gastos especiais
+    gastos_especiais = []
+    if empresa.tem_gastos_pd:
+        gastos_especiais.append("Pesquisa e Desenvolvimento")
+    if empresa.tem_gastos_treinamento:
+        gastos_especiais.append("Treinamento de funcionários")
+    if empresa.tem_gastos_ambientais:
+        gastos_especiais.append("Preservação ambiental")
+    
+    if gastos_especiais:
+        contexto += f"- Gastos Especiais: {', '.join(gastos_especiais)}\n"
+    
+    # Tipos de contratação
+    if empresa.usa_pj:
+        contexto += "- Contrata Pessoa Jurídica (PJ)\n"
+    
+    if empresa.usa_terceirizacao:
+        contexto += "- Utiliza serviços terceirizados\n"
+    
+    # Observações
+    if empresa.observacoes_fiscais:
+        contexto += f"- Observações Fiscais: {empresa.observacoes_fiscais}\n"
+    
+    # Localização da empresa
+    if empresa.cidade or empresa.estado or empresa.uf:
+        contexto += "\nLocalização da Empresa:\n"
+        if empresa.cidade:
+            contexto += f"- Cidade: {empresa.cidade}\n"
+        if empresa.estado:
+            contexto += f"- Estado: {empresa.estado}\n"
+        if empresa.uf:
+            contexto += f"- UF: {empresa.uf}\n"
+        if empresa.cep:
+            contexto += f"- CEP: {empresa.cep}\n"
+    
+    # Buscar legislações específicas por localização
+    legislacoes_locais = obter_legislacoes_por_localizacao(empresa)
+    if legislacoes_locais.exists():
+        contexto += "\n🏛️ LEGISLAÇÕES ESPECÍFICAS POR LOCALIZAÇÃO:\n"
+        contexto += f"Total de legislações aplicáveis: {legislacoes_locais.count()}\n"
+        
+        # Contar por esfera
+        federais = legislacoes_locais.filter(esfera='FEDERAL').count()
+        estaduais = legislacoes_locais.filter(esfera='ESTADUAL').count()
+        municipais = legislacoes_locais.filter(esfera='MUNICIPAL').count()
+        
+        contexto += f"- Federais: {federais}\n"
+        if empresa.uf:
+            contexto += f"- Estaduais ({empresa.uf}): {estaduais}\n"
+        if empresa.cidade:
+            contexto += f"- Municipais ({empresa.cidade}): {municipais}\n"
+        
+        # Destacar as mais relevantes
+        contexto += "\nLegislações mais relevantes:\n"
+        legislacoes_relevantes = legislacoes_locais.filter(relevancia__gte=4)[:10]
+        for leg in legislacoes_relevantes:
+            contexto += f"- {leg.get_identificacao()} ({leg.get_esfera_display()}): {leg.titulo[:100]}...\n"
+            if leg.resumo:
+                contexto += f"  Resumo: {leg.resumo[:150]}...\n"
+    
+    contexto += """
+OPORTUNIDADES DE RECUPERAÇÃO SUGERIDAS BASEADAS NO PERFIL:
+
+Com base no perfil da empresa, considere especialmente:
+"""
+    
+    # Sugestões baseadas no regime tributário
+    if empresa.regime_tributario == 'SIMPLES':
+        contexto += "- Verificar se há recolhimentos indevidos de tributos já inclusos no Simples Nacional\n"
+        contexto += "- Analisar possibilidade de exclusão retroativa do Simples se benéfico\n"
+    elif empresa.regime_tributario == 'PRESUMIDO':
+        contexto += "- Verificar se há base de cálculo superior ao presumido em alguns períodos\n"
+        contexto += "- Analisar créditos de PIS/COFINS não aproveitados\n"
+    elif empresa.regime_tributario == 'REAL':
+        contexto += "- Verificar aproveitamento integral de créditos de PIS/COFINS\n"
+        contexto += "- Analisar créditos de ICMS não aproveitados\n"
+    
+    # Sugestões baseadas no setor
+    if empresa.setor_atuacao == 'INDUSTRIA':
+        contexto += "- Verificar créditos de IPI na aquisição de matérias-primas\n"
+        contexto += "- Analisar aproveitamento de créditos presumidos\n"
+    elif empresa.setor_atuacao == 'TECNOLOGIA':
+        contexto += "- Verificar incentivos fiscais para inovação tecnológica\n"
+        contexto += "- Analisar benefícios da Lei de Informática\n"
+    
+    # Sugestões baseadas em gastos especiais
+    if empresa.tem_gastos_pd:
+        contexto += "- Verificar incentivos fiscais para P&D (Lei do Bem)\n"
+    
+    if empresa.exporta:
+        contexto += "- Verificar imunidade de PIS/COFINS sobre exportações\n"
+        contexto += "- Analisar créditos presumidos de IPI\n"
+    
+    if empresa.importa:
+        contexto += "- Verificar aproveitamento de créditos na importação\n"
+        contexto += "- Analisar regimes especiais de importação\n"
+    
+    # Adicionar dados TIPI específicos baseados nos NCMs da empresa
+    if empresa.principais_ncm:
+        contexto += "\n📊 DADOS TIPI ESPECÍFICOS DA EMPRESA:\n"
+        contexto += f"Total de registros na tabela TIPI: {TabelaTIPI.objects.count()}\n"
+        
+        # Extrair códigos NCM da empresa
+        ncm_codes = [ncm.strip() for ncm in empresa.principais_ncm.split(',') if ncm.strip()]
+        
+        for ncm in ncm_codes:
+            # Buscar na tabela TIPI
+            tipi_item = TabelaTIPI.objects.filter(codigo_ncm=ncm, ativo=True).first()
+            if tipi_item:
+                contexto += f"- NCM {ncm}: {tipi_item.descricao}\n"
+                contexto += f"  Alíquota IPI: {tipi_item.aliquota_ipi}%\n"
+                if tipi_item.observacoes:
+                    contexto += f"  Observações: {tipi_item.observacoes}\n"
+                
+                # Sugestões específicas baseadas na alíquota
+                if tipi_item.aliquota_ipi == 0:
+                    contexto += "  ⚠️  Produto isento de IPI - verificar se não há cobrança indevida\n"
+                elif tipi_item.aliquota_ipi > 0:
+                    contexto += f"  💡 Produto tributado - verificar se IPI de {tipi_item.aliquota_ipi}% está sendo aplicado corretamente\n"
+                
+                contexto += "\n"
+            else:
+                contexto += f"- NCM {ncm}: Não encontrado na tabela TIPI atual\n"
+                contexto += "  ⚠️  Verificar se o código NCM está correto\n\n"
+    
+    return contexto
+
+def obter_legislacoes_por_localizacao(empresa):
+    """
+    Busca legislações específicas baseadas na localização da empresa.
+    Inclui legislações federais, estaduais do estado da empresa e municipais da cidade.
+    """
+    from .models import Legislacao
+    
+    # Sempre incluir legislações federais
+    legislacoes_relevantes = Legislacao.objects.filter(
+        ativo=True,
+        esfera='FEDERAL'
+    ).order_by('-relevancia', '-data_publicacao')
+    
+    # Legislações estaduais específicas
+    if empresa.uf:
+        legislacoes_estaduais = Legislacao.objects.filter(
+            ativo=True,
+            esfera='ESTADUAL',
+            uf_especifica=empresa.uf
+        ).order_by('-relevancia', '-data_publicacao')
+        
+        # Também incluir legislações estaduais genéricas (sem UF específica)
+        legislacoes_estaduais_genericas = Legislacao.objects.filter(
+            ativo=True,
+            esfera='ESTADUAL',
+            uf_especifica__isnull=True
+        ).order_by('-relevancia', '-data_publicacao')
+        
+        legislacoes_relevantes = legislacoes_relevantes.union(
+            legislacoes_estaduais, 
+            legislacoes_estaduais_genericas
+        )
+    
+    # Legislações municipais específicas
+    if empresa.cidade and empresa.uf:
+        legislacoes_municipais = Legislacao.objects.filter(
+            ativo=True,
+            esfera='MUNICIPAL',
+            municipio_especifico__icontains=empresa.cidade,
+            uf_especifica=empresa.uf
+        ).order_by('-relevancia', '-data_publicacao')
+        
+        # Também incluir legislações municipais genéricas
+        legislacoes_municipais_genericas = Legislacao.objects.filter(
+            ativo=True,
+            esfera='MUNICIPAL',
+            municipio_especifico__isnull=True
+        ).order_by('-relevancia', '-data_publicacao')
+        
+        legislacoes_relevantes = legislacoes_relevantes.union(
+            legislacoes_municipais,
+            legislacoes_municipais_genericas
+        )
+    
+    return legislacoes_relevantes
+
+def cadastrar_empresa(request):
+    """Cadastra uma nova empresa com informações completas para análise fiscal"""
+    if request.method == 'POST':
+        form = EmpresaForm(request.POST)
+        if form.is_valid():
+            empresa = form.save()
+            messages.success(request, f'Empresa "{empresa.razao_social}" foi cadastrada com sucesso!')
+            return redirect('auditoria:detalhes_auditoria', empresa_id=empresa.id)
+        else:
+            messages.error(request, 'Erro ao cadastrar empresa. Verifique os campos marcados.')
+    else:
+        form = EmpresaForm()
+    
+    return render(request, 'auditoria/cadastrar_empresa.html', {'form': form})

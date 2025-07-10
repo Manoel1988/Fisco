@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Nova Empresa - Sistema Fisco</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            padding: 2rem 0;
+        }
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #764ba2;
+        }
+        .form-section h4 {
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+        .form-control:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 0.2rem rgba(118, 75, 162, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-secondary {
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .required {
+            color: #dc3545;
+        }
+        .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .alert-info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">🏢 Cadastrar Nova Empresa</h1>
+        
+        <div class="form-card">
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle"></i> Informações Importantes</h5>
+                <p>Preencha o máximo de informações possível. Quanto mais detalhes você fornecer, melhor será a análise fiscal da IA para identificar oportunidades de recuperação de impostos.</p>
+            </div>
+            
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-table"></i> Tabela TIPI Integrada</h5>
+                <p><strong>O sistema possui 10.504 registros da Tabela TIPI</strong> (Tabela de Incidência do Imposto sobre Produtos Industrializados). Informe os códigos NCM dos seus principais produtos para que a IA possa:</p>
+                <ul>
+                    <li>✅ Verificar alíquotas corretas de IPI</li>
+                    <li>✅ Identificar produtos isentos</li>
+                    <li>✅ Detectar cobranças indevidas</li>
+                    <li>✅ Sugerir oportunidades de recuperação específicas</li>
+                </ul>
+            </div>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Seção 1: Dados Básicos -->
+                <div class="form-section">
+                    <h4>📋 Dados Básicos da Empresa</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.razao_social.id_for_label }}" class="form-label">{{ form.razao_social.label }} <span class="required">*</span></label>
+                                {{ form.razao_social }}
+                                {% if form.razao_social.errors %}
+                                    <div class="text-danger">{{ form.razao_social.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.cnpj.id_for_label }}" class="form-label">{{ form.cnpj.label }} <span class="required">*</span></label>
+                                {{ form.cnpj }}
+                                {% if form.cnpj.errors %}
+                                    <div class="text-danger">{{ form.cnpj.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.regime_tributario.id_for_label }}" class="form-label">{{ form.regime_tributario.label }} <span class="required">*</span></label>
+                                {{ form.regime_tributario }}
+                                {% if form.regime_tributario.errors %}
+                                    <div class="text-danger">{{ form.regime_tributario.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.regime_apuracao.id_for_label }}" class="form-label">{{ form.regime_apuracao.label }}</label>
+                                {{ form.regime_apuracao }}
+                                {% if form.regime_apuracao.errors %}
+                                    <div class="text-danger">{{ form.regime_apuracao.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seção 2: Atividade e Classificação -->
+                <div class="form-section">
+                    <h4>🎯 Atividade e Classificação</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.atividade_principal.id_for_label }}" class="form-label">{{ form.atividade_principal.label }}</label>
+                                {{ form.atividade_principal }}
+                                {% if form.atividade_principal.errors %}
+                                    <div class="text-danger">{{ form.atividade_principal.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.cnae_principal.id_for_label }}" class="form-label">{{ form.cnae_principal.label }}</label>
+                                {{ form.cnae_principal }}
+                                {% if form.cnae_principal.errors %}
+                                    <div class="text-danger">{{ form.cnae_principal.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.setor_atuacao.id_for_label }}" class="form-label">{{ form.setor_atuacao.label }}</label>
+                        {{ form.setor_atuacao }}
+                        {% if form.setor_atuacao.errors %}
+                            <div class="text-danger">{{ form.setor_atuacao.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.principais_ncm.id_for_label }}" class="form-label">{{ form.principais_ncm.label }}</label>
+                        {{ form.principais_ncm }}
+                        {% if form.principais_ncm.errors %}
+                            <div class="text-danger">{{ form.principais_ncm.errors }}</div>
+                        {% endif %}
+                                                 <div class="help-text">Códigos NCM dos principais produtos (Ex: 1234.56.78, 9876.54.32)</div>
+                         <div class="mt-2">
+                             <a href="/admin/auditoria/tabelatipi/" target="_blank" class="btn btn-sm btn-outline-primary">
+                                 <i class="fas fa-search"></i> Consultar Tabela TIPI
+                             </a>
+                         </div>
+                     </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.produtos_principais.id_for_label }}" class="form-label">{{ form.produtos_principais.label }}</label>
+                        {{ form.produtos_principais }}
+                        {% if form.produtos_principais.errors %}
+                            <div class="text-danger">{{ form.produtos_principais.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Descreva os principais produtos para melhor análise fiscal</div>
+                    </div>
+                </div>
+                
+                <!-- Seção 3: Dados Financeiros -->
+                <div class="form-section">
+                    <h4>💰 Dados Financeiros</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.faturamento_anual.id_for_label }}" class="form-label">{{ form.faturamento_anual.label }}</label>
+                                {{ form.faturamento_anual }}
+                                {% if form.faturamento_anual.errors %}
+                                    <div class="text-danger">{{ form.faturamento_anual.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.numero_funcionarios.id_for_label }}" class="form-label">{{ form.numero_funcionarios.label }}</label>
+                                {{ form.numero_funcionarios }}
+                                {% if form.numero_funcionarios.errors %}
+                                    <div class="text-danger">{{ form.numero_funcionarios.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seção 4: Operações -->
+                <div class="form-section">
+                    <h4>🌎 Operações</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.estados_operacao.id_for_label }}" class="form-label">{{ form.estados_operacao.label }}</label>
+                                {{ form.estados_operacao }}
+                                {% if form.estados_operacao.errors %}
+                                    <div class="text-danger">{{ form.estados_operacao.errors }}</div>
+                                {% endif %}
+                                <div class="help-text">Estados separados por vírgula (Ex: SP, RJ, MG)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    {{ form.tem_filiais }}
+                                    <label for="{{ form.tem_filiais.id_for_label }}">{{ form.tem_filiais.label }}</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    {{ form.exporta }}
+                                    <label for="{{ form.exporta.id_for_label }}">{{ form.exporta.label }}</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    {{ form.importa }}
+                                    <label for="{{ form.importa.id_for_label }}">{{ form.importa.label }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seção 5: Localização da Empresa -->
+                <div class="form-section">
+                    <h4>📍 Localização da Empresa</h4>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Importante:</strong> A localização será usada para identificar legislações específicas do seu município e estado, aumentando a precisão da análise fiscal.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.cidade.id_for_label }}" class="form-label">{{ form.cidade.label }}</label>
+                                {{ form.cidade }}
+                                {% if form.cidade.errors %}
+                                    <div class="text-danger">{{ form.cidade.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.estado.id_for_label }}" class="form-label">{{ form.estado.label }}</label>
+                                {{ form.estado }}
+                                {% if form.estado.errors %}
+                                    <div class="text-danger">{{ form.estado.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="{{ form.uf.id_for_label }}" class="form-label">{{ form.uf.label }}</label>
+                                {{ form.uf }}
+                                {% if form.uf.errors %}
+                                    <div class="text-danger">{{ form.uf.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.cep.id_for_label }}" class="form-label">{{ form.cep.label }}</label>
+                                {{ form.cep }}
+                                {% if form.cep.errors %}
+                                    <div class="text-danger">{{ form.cep.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seção 6: Benefícios e Incentivos -->
+                <div class="form-section">
+                    <h4>🎁 Benefícios e Incentivos Fiscais</h4>
+                    
+                    <div class="mb-3">
+                        <div class="checkbox-item">
+                            {{ form.tem_beneficios_fiscais }}
+                            <label for="{{ form.tem_beneficios_fiscais.id_for_label }}">{{ form.tem_beneficios_fiscais.label }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.quais_beneficios.id_for_label }}" class="form-label">{{ form.quais_beneficios.label }}</label>
+                        {{ form.quais_beneficios }}
+                        {% if form.quais_beneficios.errors %}
+                            <div class="text-danger">{{ form.quais_beneficios.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Seção 7: Gastos Especiais -->
+                <div class="form-section">
+                    <h4>💡 Gastos Especiais (Possíveis Incentivos)</h4>
+                    
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            {{ form.tem_gastos_pd }}
+                            <label for="{{ form.tem_gastos_pd.id_for_label }}">{{ form.tem_gastos_pd.label }}</label>
+                        </div>
+                        <div class="checkbox-item">
+                            {{ form.tem_gastos_treinamento }}
+                            <label for="{{ form.tem_gastos_treinamento.id_for_label }}">{{ form.tem_gastos_treinamento.label }}</label>
+                        </div>
+                        <div class="checkbox-item">
+                            {{ form.tem_gastos_ambientais }}
+                            <label for="{{ form.tem_gastos_ambientais.id_for_label }}">{{ form.tem_gastos_ambientais.label }}</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seção 8: Tipos de Contratação -->
+                <div class="form-section">
+                    <h4>👥 Tipos de Contratação</h4>
+                    
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            {{ form.usa_pj }}
+                            <label for="{{ form.usa_pj.id_for_label }}">{{ form.usa_pj.label }}</label>
+                        </div>
+                        <div class="checkbox-item">
+                            {{ form.usa_terceirizacao }}
+                            <label for="{{ form.usa_terceirizacao.id_for_label }}">{{ form.usa_terceirizacao.label }}</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Seção 9: Observações -->
+                <div class="form-section">
+                    <h4>📝 Observações Fiscais</h4>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.observacoes_fiscais.id_for_label }}" class="form-label">{{ form.observacoes_fiscais.label }}</label>
+                        {{ form.observacoes_fiscais }}
+                        {% if form.observacoes_fiscais.errors %}
+                            <div class="text-danger">{{ form.observacoes_fiscais.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Descreva situações especiais, processos administrativos, histórico de autuações, etc.</div>
+                    </div>
+                </div>
+                
+                <!-- Botões -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'auditoria:lista_empresas' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Cadastrar Empresa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+    
+    <script>
+        // Máscara para CNPJ
+        document.getElementById('{{ form.cnpj.id_for_label }}').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 14) {
+                value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+                e.target.value = value;
+            }
+        });
+        
+        // Máscara para CNAE
+        document.getElementById('{{ form.cnae_principal.id_for_label }}').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 7) {
+                value = value.replace(/^(\d{4})(\d{1})(\d{2})$/, '$1-$2/$3');
+                e.target.value = value;
+            }
+        });
+        
+        // Máscara para CEP
+        document.getElementById('{{ form.cep.id_for_label }}').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 8) {
+                value = value.replace(/^(\d{5})(\d{3})$/, '$1-$2');
+                e.target.value = value;
+            }
+        });
+        
+        // Show/hide benefícios textarea
+        document.getElementById('{{ form.tem_beneficios_fiscais.id_for_label }}').addEventListener('change', function() {
+            const beneficiosTextarea = document.getElementById('{{ form.quais_beneficios.id_for_label }}');
+            beneficiosTextarea.style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
+</body>
+</html> 

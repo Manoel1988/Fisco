@@ -187,8 +187,8 @@
         
         <div class="content">
             <div style="display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
-                <a href="/admin/auditoria/empresa/add/" class="add-button">
-                    ➕ Adicionar Nova Empresa
+                <a href="{% url 'auditoria:cadastrar_empresa' %}" class="add-button">
+                    ➕ Cadastrar Nova Empresa
                 </a>
                 <a href="{% url 'auditoria:legislacoes' %}" class="add-button" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);">
                     📚 Consultar Legislações
@@ -198,7 +198,7 @@
             {% if empresas %}
                 <div class="companies-list">
                     {% for empresa in empresas %}
-                        <a href="{% url 'detalhes_auditoria' empresa.id %}" style="text-decoration:none;">
+                        <a href="{% url 'auditoria:detalhes_auditoria' empresa.id %}" style="text-decoration:none;">
                         <div class="company-card">
                             <div class="company-name">{{ empresa.razao_social }}</div>
                             <div class="company-details">

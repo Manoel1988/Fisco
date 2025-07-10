@@ -20,6 +20,7 @@ def validate_file_size(value):
 # auditoria/models.py
 
 class Empresa(models.Model):
+    # Dados básicos
     razao_social = models.CharField(max_length=255, unique=True, db_index=True)
     cnpj = models.CharField(max_length=18, unique=True, db_index=True) # Formato XX.XXX.XXX/YYYY-ZZ
     regime_tributario = models.CharField(
@@ -32,9 +33,137 @@ class Empresa(models.Model):
         default='SIMPLES',
         db_index=True
     )
+    
+    # Informações para análise fiscal avançada
+    atividade_principal = models.CharField(max_length=300, blank=True, help_text="Atividade principal da empresa")
+    cnae_principal = models.CharField(max_length=10, blank=True, help_text="CNAE principal (ex: 6201-5)")
+    
+    # Dados financeiros
+    faturamento_anual = models.CharField(
+        max_length=20,
+        choices=[
+            ('ATE_360K', 'Até R$ 360.000'),
+            ('360K_4_8M', 'De R$ 360.000 a R$ 4.800.000'),
+            ('4_8M_300M', 'De R$ 4.800.000 a R$ 300.000.000'),
+            ('ACIMA_300M', 'Acima de R$ 300.000.000'),
+        ],
+        blank=True,
+        help_text="Faixa de faturamento anual"
+    )
+    
+    # Estrutura da empresa
+    numero_funcionarios = models.CharField(
+        max_length=20,
+        choices=[
+            ('0_9', '0 a 9 funcionários'),
+            ('10_49', '10 a 49 funcionários'),
+            ('50_99', '50 a 99 funcionários'),
+            ('100_499', '100 a 499 funcionários'),
+            ('500_MAIS', '500 ou mais funcionários'),
+        ],
+        blank=True,
+        help_text="Número de funcionários"
+    )
+    
+    # Características operacionais
+    tem_filiais = models.BooleanField(default=False, help_text="Possui filiais?")
+    estados_operacao = models.CharField(
+        max_length=500, 
+        blank=True, 
+        help_text="Estados onde opera (separados por vírgula)"
+    )
+    
+    # Operações especiais
+    exporta = models.BooleanField(default=False, help_text="Realiza exportações?")
+    importa = models.BooleanField(default=False, help_text="Realiza importações?")
+    
+    # Benefícios e regimes especiais
+    tem_beneficios_fiscais = models.BooleanField(default=False, help_text="Possui benefícios fiscais?")
+    quais_beneficios = models.TextField(blank=True, help_text="Quais benefícios fiscais possui?")
+    
+    regime_apuracao = models.CharField(
+        max_length=20,
+        choices=[
+            ('MENSAL', 'Apuração Mensal'),
+            ('TRIMESTRAL', 'Apuração Trimestral'),
+            ('ANUAL', 'Apuração Anual'),
+        ],
+        blank=True,
+        help_text="Regime de apuração dos tributos"
+    )
+    
+    # Setor e atividades
+    setor_atuacao = models.CharField(
+        max_length=50,
+        choices=[
+            ('INDUSTRIA', 'Indústria'),
+            ('COMERCIO', 'Comércio'),
+            ('SERVICOS', 'Serviços'),
+            ('CONSTRUCAO', 'Construção Civil'),
+            ('AGRICULTURA', 'Agricultura'),
+            ('TECNOLOGIA', 'Tecnologia'),
+            ('SAUDE', 'Saúde'),
+            ('EDUCACAO', 'Educação'),
+            ('FINANCEIRO', 'Financeiro'),
+            ('TRANSPORTES', 'Transportes'),
+            ('OUTROS', 'Outros'),
+        ],
+        blank=True,
+        help_text="Setor principal de atuação"
+    )
+    
+    # Gastos especiais
+    tem_gastos_pd = models.BooleanField(default=False, help_text="Tem gastos com Pesquisa e Desenvolvimento?")
+    tem_gastos_treinamento = models.BooleanField(default=False, help_text="Tem gastos com treinamento de funcionários?")
+    tem_gastos_ambientais = models.BooleanField(default=False, help_text="Tem gastos com preservação ambiental?")
+    
+    # Tipos de contratação
+    usa_pj = models.BooleanField(default=False, help_text="Contrata Pessoa Jurídica (PJ)?")
+    usa_terceirizacao = models.BooleanField(default=False, help_text="Usa serviços terceirizados?")
+    
+    # Produtos e NCM
+    principais_ncm = models.TextField(
+        blank=True,
+        help_text="Principais códigos NCM dos produtos (separados por vírgula)"
+    )
+    produtos_principais = models.TextField(
+        blank=True,
+        help_text="Descrição dos principais produtos comercializados"
+    )
+    
+    # Observações gerais
+    observacoes_fiscais = models.TextField(
+        blank=True, 
+        help_text="Observações especiais sobre a situação fiscal da empresa"
+    )
+    
+    # Campos existentes
     data_cadastro = models.DateTimeField(auto_now_add=True, db_index=True)
     resultado_auditoria = models.JSONField(null=True, blank=True)
     resultado_ia = models.TextField(null=True, blank=True)
+    
+    # Localização para cruzamento com legislações locais
+    cidade = models.CharField(max_length=100, blank=True, help_text="Cidade onde está localizada a empresa")
+    estado = models.CharField(max_length=50, blank=True, help_text="Estado onde está localizada a empresa")
+    uf = models.CharField(
+        max_length=2, 
+        blank=True, 
+        help_text="UF do estado (ex: SP, RJ, MG)",
+        choices=[
+            ('AC', 'Acre'), ('AL', 'Alagoas'), ('AP', 'Amapá'), ('AM', 'Amazonas'),
+            ('BA', 'Bahia'), ('CE', 'Ceará'), ('DF', 'Distrito Federal'), ('ES', 'Espírito Santo'),
+            ('GO', 'Goiás'), ('MA', 'Maranhão'), ('MT', 'Mato Grosso'), ('MS', 'Mato Grosso do Sul'),
+            ('MG', 'Minas Gerais'), ('PA', 'Pará'), ('PB', 'Paraíba'), ('PR', 'Paraná'),
+            ('PE', 'Pernambuco'), ('PI', 'Piauí'), ('RJ', 'Rio de Janeiro'), ('RN', 'Rio Grande do Norte'),
+            ('RS', 'Rio Grande do Sul'), ('RO', 'Rondônia'), ('RR', 'Roraima'), ('SC', 'Santa Catarina'),
+            ('SP', 'São Paulo'), ('SE', 'Sergipe'), ('TO', 'Tocantins')
+        ]
+    )
+    cep = models.CharField(
+        max_length=9, 
+        blank=True, 
+        help_text="CEP da empresa (formato: XXXXX-XXX)"
+    )
 
     def __str__(self):
         return f"{self.razao_social} ({self.cnpj})"
@@ -203,6 +332,33 @@ class Legislacao(models.Model):
     area = models.CharField(max_length=30, choices=AREA_CHOICES, help_text="Área de aplicação")
     orgao = models.CharField(max_length=30, choices=ORGAO_CHOICES, help_text="Órgão emissor")
     esfera = models.CharField(max_length=20, choices=ESFERA_CHOICES, default='FEDERAL', help_text="Esfera de competência")
+    
+    # Localização específica para legislações estaduais e municipais
+    estado_especifico = models.CharField(
+        max_length=50, 
+        blank=True, 
+        help_text="Estado específico para legislações estaduais"
+    )
+    uf_especifica = models.CharField(
+        max_length=2, 
+        blank=True, 
+        help_text="UF específica para legislações estaduais (ex: SP, RJ, MG)",
+        choices=[
+            ('', 'Não especificado'),
+            ('AC', 'Acre'), ('AL', 'Alagoas'), ('AP', 'Amapá'), ('AM', 'Amazonas'),
+            ('BA', 'Bahia'), ('CE', 'Ceará'), ('DF', 'Distrito Federal'), ('ES', 'Espírito Santo'),
+            ('GO', 'Goiás'), ('MA', 'Maranhão'), ('MT', 'Mato Grosso'), ('MS', 'Mato Grosso do Sul'),
+            ('MG', 'Minas Gerais'), ('PA', 'Pará'), ('PB', 'Paraíba'), ('PR', 'Paraná'),
+            ('PE', 'Pernambuco'), ('PI', 'Piauí'), ('RJ', 'Rio de Janeiro'), ('RN', 'Rio Grande do Norte'),
+            ('RS', 'Rio Grande do Sul'), ('RO', 'Rondônia'), ('RR', 'Roraima'), ('SC', 'Santa Catarina'),
+            ('SP', 'São Paulo'), ('SE', 'Sergipe'), ('TO', 'Tocantins')
+        ]
+    )
+    municipio_especifico = models.CharField(
+        max_length=100, 
+        blank=True, 
+        help_text="Município específico para legislações municipais"
+    )
     
     # Datas
     data_publicacao = models.DateField(help_text="Data de publicação")

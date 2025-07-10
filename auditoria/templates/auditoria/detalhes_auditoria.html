@@ -1,289 +1,552 @@
+{% load static %}
 {% load auditoria_extras %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes da Empresa</title>
+    <title>Detalhes da Empresa - Sistema Fisco</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6fa; margin: 0; padding: 0; }
-        .top-bar { max-width: 900px; margin: 0 auto; padding: 0 10px; }
-        .back-btn {
-            background: #fff;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
             color: #764ba2;
-            border: 2px solid #764ba2;
-            padding: 8px 22px;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .top-bar {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            padding: 15px 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
             border-radius: 20px;
-            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 2px 8px #eee;
-            margin: 24px 0 18px 0;
-            font-size: 1rem;
-            transition: background 0.2s, color 0.2s;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
         .back-btn:hover {
-            background: #764ba2;
-            color: #fff;
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
-        .container { max-width: 900px; margin: 0 auto 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); padding: 32px 24px; }
-        h1 { color: #764ba2; margin-bottom: 18px; font-size: 2.1rem; font-weight: 700; letter-spacing: -1px; }
-        h2 { color: #2c3e50; margin-top: 40px; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px; }
-        .empresa-card {
+        
+        /* Abas */
+        .tabs-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            justify-content: center;
+        }
+        .tab-btn {
             background: #f8f9fa;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(118,75,162,0.07);
-            padding: 28px 18px 18px 18px;
+            border: 1px solid #dee2e6;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border-color: #764ba2;
+        }
+        
+        /* Empresa Card */
+        .empresa-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+        }
+        .empresa-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .empresa-row label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 150px;
+        }
+        .edit-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        /* Botões de Ano */
+        .year-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .year-tab-btn {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-width: 80px;
+            text-align: center;
+        }
+        .year-tab-btn:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            border-color: #adb5bd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .year-tab-btn.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border-color: #764ba2;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+        }
+        
+        /* Tabela de Documentos */
+        .table-wrapper {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
             margin-bottom: 30px;
         }
-        .empresa-row { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-        .empresa-row label { font-weight: 700; color: #555; width: 160px; min-width: 120px; margin-right: 8px; }
-        .empresa-row span, .empresa-row input, .empresa-row select { flex: 1; min-width: 120px; }
-        .edit-btn {
-            display: inline-block;
-            background: #3498db;
-            color: #fff;
-            padding: 8px 22px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-top: 10px;
-            transition: background 0.2s;
-            border: none;
-            cursor: pointer;
-            margin-right: 8px;
+        .table-wrapper h3 {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+            font-size: 1.2rem;
         }
-        .edit-btn:hover { background: #217dbb; }
-        .save-btn { background: #27ae60; }
-        .save-btn:hover { background: #219150; }
-        .cancel-btn { background: #aaa; color: #fff; }
-        .cancel-btn:hover { background: #888; }
-        input[type="text"], select {
-            padding: 7px 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        .docs-table {
             width: 100%;
-            max-width: 320px;
+            border-collapse: collapse;
+            background: white;
+        }
+        .docs-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .docs-table th:first-child {
+            text-align: left;
+            padding-left: 20px;
+            min-width: 180px;
+        }
+        .docs-table td {
+            padding: 12px 6px;
+            text-align: center;
+            border: 1px solid #f1f3f5;
+            vertical-align: middle;
+            font-size: 0.85rem;
+        }
+        .docs-table td:first-child {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            text-align: left;
+            padding-left: 20px;
+            border-right: 2px solid #e9ecef;
+        }
+        .docs-table tbody tr:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        
+        /* Células de Documentos */
+        .doc-cell {
+            position: relative;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+        }
+        .uploaded {
+            color: #28a745;
+            font-weight: 600;
+            font-size: 0.75rem;
+            background: #d4edda;
+            padding: 4px 8px;
+            border-radius: 12px;
+            border: 1px solid #c3e6cb;
+        }
+        .not-uploaded {
+            color: #dc3545;
+            font-weight: 500;
+            font-size: 0.7rem;
+            background: #f8d7da;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid #f5c6cb;
+            margin-top: 4px;
+        }
+        
+        /* Controles de Upload */
+        .file-input {
+            width: 100%;
+            max-width: 90px;
+            font-size: 0.7rem;
+            padding: 4px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: white;
+            margin-bottom: 4px;
+        }
+        .upload-btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 90px;
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+        }
+        .upload-btn:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+        
+        /* Links de Arquivo */
+        .file-links {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            align-items: center;
+        }
+        .file-link {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            transition: all 0.2s ease;
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
+        }
+        .file-link:hover {
+            background: #bbdefb;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        
+        /* Animações */
+        .year-content {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsividade */
+        @media (max-width: 1200px) {
+            .docs-table th, .docs-table td {
+                padding: 10px 4px;
+                font-size: 0.8rem;
+            }
+            .file-input, .upload-btn {
+                max-width: 80px;
+                font-size: 0.7rem;
+            }
+        }
+        @media (max-width: 900px) {
+            .container {
+                padding: 10px;
+            }
+            .docs-table th, .docs-table td {
+                padding: 8px 3px;
+                font-size: 0.75rem;
+            }
+            .docs-table th:first-child,
+            .docs-table td:first-child {
+                min-width: 140px;
+                padding-left: 10px;
+            }
+            .file-input, .upload-btn {
+                max-width: 70px;
+                font-size: 0.65rem;
+                padding: 4px 6px;
+            }
+            .year-tab-btn {
+                padding: 8px 12px;
+                font-size: 0.85rem;
+                min-width: 60px;
+            }
+        }
+        
+        /* Análise IA */
+        .ia-markdown {
             font-size: 1rem;
+            line-height: 1.6;
+            color: #333;
         }
-        .table-wrapper { overflow-x: auto; margin-top: 18px; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th, td { border: 1px solid #e0e0e0; padding: 8px 6px; text-align: center; font-size: 0.97rem; }
-        th { background: #ede7f6; color: #764ba2; font-weight: 700; position: sticky; top: 0; z-index: 2; }
-        tr:nth-child(even) td { background: #f8f9fa; }
-        tr:nth-child(odd) td { background: #fff; }
-        .file-link { color: #2980b9; text-decoration: underline; }
-        .no-file { color: #e74c3c; font-weight: 600; }
-        @media (max-width: 700px) {
-            .container { padding: 10px 2px; }
-            th, td { font-size: 0.85rem; padding: 4px 2px; }
-            .empresa-row label { width: 100px; font-size: 0.95rem; }
-            h1 { font-size: 1.3rem; }
-            h2 { font-size: 1.1rem; }
-            .edit-btn { padding: 8px 12px; font-size: 0.95rem; }
-            input[type="text"], select { font-size: 0.95rem; }
-        }
-        @media (max-width: 480px) {
-            .container { padding: 2px 0; }
-            .empresa-row { flex-direction: column; align-items: flex-start; }
-            .empresa-row label { width: 100%; display: block; margin-bottom: 2px; }
-            input[type="text"], select { width: 100%; font-size: 0.92rem; }
-            th, td { font-size: 0.78rem; }
-        }
-        .tabs-bar { border-bottom: 2px solid #ede7f6; }
-        .tab-btn { background: #f8f9fa; color: #764ba2; border: none; border-radius: 12px 12px 0 0; padding: 10px 28px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: background 0.2s, color 0.2s; }
-        .tab-btn.active, .tab-btn:hover { background: #764ba2; color: #fff; }
-        .tab-content { animation: fadein 0.3s; }
-        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-        .ia-markdown h1, .ia-markdown h2, .ia-markdown h3, .ia-markdown h4 {
-            color: #1976d2;
-            margin-top: 18px;
-            margin-bottom: 10px;
-            font-weight: 700;
+        .ia-markdown h1, .ia-markdown h2, .ia-markdown h3 {
+            color: #764ba2;
+            margin: 20px 0 10px 0;
         }
         .ia-markdown ul, .ia-markdown ol {
-            margin: 10px 0 10px 24px;
-            padding-left: 20px;
+            margin: 10px 0 10px 20px;
         }
         .ia-markdown li {
-            margin-bottom: 6px;
-        }
-        .ia-markdown table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 18px 0;
-            background: #fff;
-            font-size: 1rem;
-        }
-        .ia-markdown th, .ia-markdown td {
-            border: 1px solid #b3c6e0;
-            padding: 8px 10px;
-            text-align: left;
-        }
-        .ia-markdown th {
-            background: #1976d2;
-            color: #fff;
-            font-weight: 700;
-        }
-        .ia-markdown tr:nth-child(even) td {
-            background: #f4f8fd;
-        }
-        .ia-markdown tr:nth-child(odd) td {
-            background: #eaf1fb;
+            margin-bottom: 5px;
         }
         .ia-markdown strong {
             color: #1976d2;
-        }
-        .ia-markdown em {
-            color: #e67e22;
-        }
-        .ia-markdown pre, .ia-markdown code {
-            background: #f4f8fd;
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 0.98rem;
-        }
-        .ia-markdown p {
-            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="top-bar">
         <button onclick="goBack()" class="back-btn">← Voltar</button>
+        <div style="float: right; margin-top: 5px; gap: 10px; display: flex;">
+            <a href="{% url 'auditoria:gerar_pdf_analise' empresa.id %}" class="back-btn" style="text-decoration: none; display: inline-block;">
+                📄 Baixar PDF
+            </a>
+            <button onclick="confirmarExclusao()" class="back-btn" style="background: #dc3545; border-color: #dc3545;">
+                🗑️ Excluir Empresa
+            </button>
+        </div>
         <div style="clear:both;"></div>
     </div>
+    
     <div class="container">
         <h1>Detalhes da Empresa</h1>
-        <div class="tabs-bar" style="display:flex;gap:8px;margin-bottom:24px;">
+        
+        <!-- Abas -->
+        <div class="tabs-bar">
             <button class="tab-btn active" id="tab-docs-btn" onclick="showTab('docs')">📄 Documentos</button>
-            <button class="tab-btn" id="tab-analise-btn" onclick="showTab('analise')">📊 Resultados da Análise</button>
+            <button class="tab-btn" id="tab-analise-btn" onclick="showTab('analise')">📊 Análise IA</button>
         </div>
+        
+        <!-- Aba Documentos -->
         <div id="tab-docs" class="tab-content" style="display:block;">
+            <!-- Informações da Empresa -->
             <form id="empresa-form" method="post" class="empresa-card">
                 {% csrf_token %}
                 <div id="empresa-view">
-                    <div class="empresa-row"><label>Razão Social:</label> <span id="view-razao">{{ empresa.razao_social }}</span></div>
-                    <div class="empresa-row"><label>CNPJ:</label> <span id="view-cnpj">{{ empresa.cnpj }}</span></div>
-                    <div class="empresa-row"><label>Regime Tributário:</label> <span id="view-regime">{{ empresa.get_regime_tributario_display }}</span></div>
-                    <div class="empresa-row"><label>Data de Cadastro:</label> <span>{{ empresa.data_cadastro|date:'d/m/Y H:i' }}</span></div>
-                    <button type="button" id="edit-btn" class="edit-btn">Editar Empresa</button>
-                </div>
-                <div id="empresa-edit" style="display:none;">
-                    <div class="empresa-row"><label>Razão Social:</label> <input type="text" name="razao_social" value="{{ empresa.razao_social }}" required></div>
-                    <div class="empresa-row"><label>CNPJ:</label> <input type="text" name="cnpj" value="{{ empresa.cnpj }}" required></div>
-                    <div class="empresa-row"><label>Regime Tributário:</label>
-                        <select name="regime_tributario" required>
-                            <option value="SIMPLES" {% if empresa.regime_tributario == 'SIMPLES' %}selected{% endif %}>Simples Nacional</option>
-                            <option value="PRESUMIDO" {% if empresa.regime_tributario == 'PRESUMIDO' %}selected{% endif %}>Lucro Presumido</option>
-                            <option value="REAL" {% if empresa.regime_tributario == 'REAL' %}selected{% endif %}>Lucro Real</option>
-                        </select>
+                    <div class="empresa-row">
+                        <label>Razão Social:</label> 
+                        <span>{{ empresa.razao_social }}</span>
                     </div>
-                    <input type="hidden" name="edit_empresa" value="1">
-                    <button type="submit" class="edit-btn save-btn">Salvar</button>
-                    <button type="button" id="cancel-btn" class="edit-btn cancel-btn">Cancelar</button>
+                    <div class="empresa-row">
+                        <label>CNPJ:</label> 
+                        <span>{{ empresa.cnpj }}</span>
+                    </div>
+                    <div class="empresa-row">
+                        <label>Regime Tributário:</label> 
+                        <span>{{ empresa.get_regime_tributario_display }}</span>
+                    </div>
+                    <div class="empresa-row">
+                        <label>Data de Cadastro:</label> 
+                        <span>{{ empresa.data_cadastro|date:'d/m/Y H:i' }}</span>
+                    </div>
+                    <button type="button" id="edit-btn" class="edit-btn">✏️ Editar Empresa</button>
                 </div>
             </form>
-            <h2>Documentos Fiscais Anexados</h2>
-            <div class="table-wrapper">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="hidden" name="empresa_id" value="{{ empresa.id }}">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tipo de Documento</th>
-                                {% for ano in anos_para_exibir %}
-                                    <th colspan="12">{{ ano }}</th>
-                                {% endfor %}
-                            </tr>
-                            <tr>
-                                <th></th>
-                                {% for ano in anos_para_exibir %}
+            
+            <!-- Seleção de Ano -->
+            <div class="year-tabs">
+                {% for ano in anos_para_exibir %}
+                    <button class="year-tab-btn {% if forloop.first %}active{% endif %}" 
+                            id="year-tab-{{ ano }}" 
+                            onclick="showYear({{ ano }})">
+                        {{ ano }}
+                    </button>
+                {% endfor %}
+            </div>
+            
+            <!-- Tabelas por Ano -->
+            {% for ano in anos_para_exibir %}
+            <div id="year-content-{{ ano }}" class="year-content" style="display:{% if forloop.first %}block{% else %}none{% endif %};">
+                <div class="table-wrapper">
+                    <h3>📅 Documentos de {{ ano }}</h3>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="empresa_id" value="{{ empresa.id }}">
+                        <table class="docs-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo de Documento</th>
                                     {% for mes_val, mes_label in meses %}
                                         <th>{{ mes_label|slice:":3" }}</th>
                                     {% endfor %}
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for tipo_val, tipo_label in tipos_documento %}
-                            <tr>
-                                <td style="font-weight:600; text-align:left;">{{ tipo_label }}</td>
-                                {% for ano in anos_para_exibir %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tipo_val, tipo_label in tipos_documento %}
+                                <tr>
+                                    <td>{{ tipo_label }}</td>
                                     {% for mes_val, mes_label in meses %}
                                         <td>
-                                            {% get_doc documentos_por_tipo_e_periodo tipo_val ano mes_val as doc %}
-                                            {% if doc.uploaded %}
-                                                <a href="{{ doc.file_url }}" class="file-link" download>Download</a><br>
-                                                <a href="{{ doc.file_url }}" class="file-link" target="_blank">Visualizar</a>
-                                                <br><span class="uploaded">Enviado</span>
-                                            {% else %}
-                                                <form method="post" enctype="multipart/form-data" style="display:inline;">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="ano" value="{{ ano }}">
-                                                    <input type="hidden" name="tipo_documento" value="{{ tipo_val }}">
-                                                    <input type="hidden" name="mes" value="{{ mes_val }}">
-                                                    <input type="file" name="arquivo" style="margin-bottom:4px;">
-                                                    <button type="submit" class="upload-btn" name="upload_btn" value="{{ tipo_val }}_{{ mes_val }}_{{ ano }}">Enviar</button>
-                                                </form>
-                                                <br><span class="not-uploaded">Não enviado</span>
-                                            {% endif %}
+                                            <div class="doc-cell">
+                                                {% get_doc documentos_por_tipo_e_periodo tipo_val ano mes_val as doc %}
+                                                {% if doc.uploaded %}
+                                                    <div class="file-links">
+                                                        <a href="{{ doc.file_url }}" class="file-link" download>📥 Download</a>
+                                                        <a href="{{ doc.file_url }}" class="file-link" target="_blank">👁️ Ver</a>
+                                                    </div>
+                                                    <span class="uploaded">✅ Enviado</span>
+                                                {% else %}
+                                                    <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="ano" value="{{ ano }}">
+                                                        <input type="hidden" name="tipo_documento" value="{{ tipo_val }}">
+                                                        <input type="hidden" name="mes" value="{{ mes_val }}">
+                                                        <input type="file" name="arquivo" class="file-input" required>
+                                                        <button type="submit" class="upload-btn" name="upload_btn" value="{{ tipo_val }}_{{ mes_val }}_{{ ano }}">📤 Enviar</button>
+                                                    </form>
+                                                    <span class="not-uploaded">❌ Não enviado</span>
+                                                {% endif %}
+                                            </div>
                                         </td>
                                     {% endfor %}
+                                </tr>
                                 {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </form>
-            </div>
-        </div>
-        <div id="tab-analise" class="tab-content" style="display:none;">
-            <button id="btn-analisar" class="edit-btn save-btn" style="background:#764ba2;margin-bottom:18px;">🔎 Analisar</button>
-            <div id="painel-analise" style="display:none;margin:32px 0 18px 0;">
-                <div style="margin-bottom:10px;font-weight:600;color:#764ba2;">Analisando: <span id="nome-arquivo">-</span></div>
-                <div style="background:#ede7f6;border-radius:8px;height:22px;width:100%;overflow:hidden;margin-bottom:8px;">
-                    <div id="barra-progresso" style="background:#764ba2;height:100%;width:0%;transition:width 0.3s;"></div>
+                            </tbody>
+                        </table>
+                    </form>
                 </div>
-                <div style="font-size:1.1rem;margin-bottom:8px;">Progresso: <span id="progresso">0</span>%</div>
-                <div style="font-size:1.1rem;margin-bottom:8px;">Valor recuperável parcial: <span id="valor-parcial">R$ 0,00</span></div>
-                <div id="resultados-parciais" style="margin-top:10px;"></div>
             </div>
-            <div id="resultado-final" style="margin:32px 0 18px 0;">
-                {% if resultado_ia %}
-                    <div class="auditoria-resultado" style="background:#e3f2fd;border-radius:10px;padding:18px 16px;margin-bottom:24px;box-shadow:0 2px 8px #eee;">
-                        <div class="ia-markdown" id="ia-markdown-estatico" style="font-size:1rem;line-height:1.5;color:#222;background:none;border:none;">{{ resultado_ia }}</div>
+            {% endfor %}
+        </div>
+        
+        <!-- Aba Análise -->
+        <div id="tab-analise" class="tab-content" style="display:none;">
+            <div class="empresa-card">
+                <button id="btn-analisar" class="edit-btn" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); margin-bottom: 20px;">
+                    🔎 Analisar Documentos
+                </button>
+                
+                <div id="painel-analise" style="display:none; margin: 20px 0;">
+                    <div style="margin-bottom: 10px; font-weight: 600; color: #764ba2;">
+                        Analisando: <span id="nome-arquivo">-</span>
                     </div>
-                {% endif %}
+                    <div style="background: #ede7f6; border-radius: 8px; height: 22px; width: 100%; overflow: hidden; margin-bottom: 8px;">
+                        <div id="barra-progresso" style="background: #764ba2; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="font-size: 1.1rem; margin-bottom: 8px;">
+                        Progresso: <span id="progresso">0</span>%
+                    </div>
+                    <div style="font-size: 1.1rem; margin-bottom: 8px;">
+                        Valor recuperável parcial: <span id="valor-parcial">R$ 0,00</span>
+                    </div>
+                    <div id="resultados-parciais" style="margin-top: 10px;"></div>
+                </div>
+                
+                <div id="resultado-final" style="margin: 20px 0;">
+                    {% if resultado_ia %}
+                        <div style="background: #e3f2fd; border-radius: 10px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <div class="ia-markdown" id="ia-markdown-estatico">{{ resultado_ia }}</div>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-        <script>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Alternar entre abas
         function showTab(tab) {
             document.getElementById('tab-docs').style.display = (tab === 'docs') ? 'block' : 'none';
             document.getElementById('tab-analise').style.display = (tab === 'analise') ? 'block' : 'none';
             document.getElementById('tab-docs-btn').classList.toggle('active', tab === 'docs');
             document.getElementById('tab-analise-btn').classList.toggle('active', tab === 'analise');
         }
-        if (document.getElementById('edit-btn')) {
-            document.getElementById('edit-btn').onclick = function() {
-                document.getElementById('empresa-view').style.display = 'none';
-                document.getElementById('empresa-edit').style.display = 'block';
-            };
+        
+        // Alternar entre anos
+        function showYear(year) {
+            document.querySelectorAll('.year-content').forEach(function(content) {
+                content.style.display = 'none';
+            });
+            document.getElementById('year-content-' + year).style.display = 'block';
+            
+            document.querySelectorAll('.year-tab-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            document.getElementById('year-tab-' + year).classList.add('active');
         }
-        if (document.getElementById('cancel-btn')) {
-            document.getElementById('cancel-btn').onclick = function() {
-                document.getElementById('empresa-edit').style.display = 'none';
-                document.getElementById('empresa-view').style.display = 'block';
-            };
-        }
+        
+        // Voltar página
         function goBack() {
             if (window.history.length > 1) {
                 window.history.back();
             } else {
-                window.location.href = '/';
+                window.location.href = '/auditoria/';
             }
         }
+        
+        // Confirmar exclusão
+        function confirmarExclusao() {
+            if (confirm('Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.')) {
+                window.location.href = "{% url 'auditoria:excluir_empresa' empresa.id %}";
+            }
+        }
+        
+        // Análise IA
         if (document.getElementById('btn-analisar')) {
             document.getElementById('btn-analisar').onclick = function() {
                 var painel = document.getElementById('painel-analise');
@@ -293,6 +556,7 @@
                 var valorParcial = document.getElementById('valor-parcial');
                 var resultadosParciais = document.getElementById('resultados-parciais');
                 var resultadoFinal = document.getElementById('resultado-final');
+                
                 painel.style.display = 'block';
                 resultadoFinal.style.display = 'none';
                 barra.style.width = '0%';
@@ -300,83 +564,53 @@
                 nomeArquivo.textContent = '-';
                 valorParcial.textContent = 'R$ 0,00';
                 resultadosParciais.innerHTML = '';
-                function atualizarAnalise(step) {
-                    fetch('{% url "analisar_empresa_ajax" empresa.id %}?step=1')
+                
+                function atualizarAnalise() {
+                    fetch('{% url "auditoria:analisar_empresa_ajax" empresa.id %}?step=1')
                     .then(resp => resp.json())
                     .then(data => {
                         barra.style.width = data.progresso + '%';
                         progresso.textContent = data.progresso;
                         nomeArquivo.textContent = data.arquivo_atual || '-';
-                        valorParcial.textContent = 'R$ ' + (data.total_parcial || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+                        valorParcial.textContent = 'R$ ' + (data.total_parcial || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        
                         if (data.resultados_parciais) {
-                            resultadosParciais.innerHTML = '<b>Arquivos analisados:</b><ul style="margin:8px 0 0 18px;">' +
-                                data.resultados_parciais.map(r => `<li>${r.arquivo}: R$ ${r.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})} (total: R$ ${r.total_parcial.toLocaleString('pt-BR', {minimumFractionDigits:2})})</li>`).join('') + '</ul>';
+                            resultadosParciais.innerHTML = '<b>Arquivos analisados:</b><ul style="margin: 8px 0 0 18px;">' +
+                                data.resultados_parciais.map(r => `<li>${r.arquivo}: R$ ${r.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})} (total: R$ ${r.total_parcial.toLocaleString('pt-BR', {minimumFractionDigits: 2})})</li>`).join('') + '</ul>';
                         }
+                        
                         if (!data.finalizado) {
-                            setTimeout(() => atualizarAnalise(step+1), 700);
+                            setTimeout(atualizarAnalise, 700);
                         } else {
                             painel.style.display = 'none';
                             resultadoFinal.style.display = 'block';
-                            let html = '';
+                            
                             if (data.resultado_ia) {
-                                html += '<div class="auditoria-resultado" style="background:#e3f2fd;border-radius:10px;padding:18px 16px;margin-bottom:24px;box-shadow:0 2px 8px #eee;">';
-                                html += '<div class="ia-markdown" id="ia-markdown-dinamico" style="font-size:1rem;line-height:1.5;color:#222;background:none;border:none;"></div>';
+                                let html = '<div style="background: #e3f2fd; border-radius: 10px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+                                html += '<div class="ia-markdown" id="ia-markdown-dinamico"></div>';
                                 html += '</div>';
-                            }
-                            resultadoFinal.innerHTML = html;
-                            if (data.resultado_ia) {
+                                resultadoFinal.innerHTML = html;
+                                
                                 const iaDiv = document.getElementById('ia-markdown-dinamico');
-                                if (iaDiv) {
-                                    renderIaMarkdownIA(data.resultado_ia, 'ia-markdown-dinamico');
+                                if (iaDiv && window.marked) {
+                                    iaDiv.innerHTML = marked.parse(data.resultado_ia);
                                 }
                             }
                         }
                     });
                 }
-                atualizarAnalise(0);
+                
+                atualizarAnalise();
             };
         }
-        function renderIaMarkdownIA(text, targetId) {
-            let textoLimpo = text.split(/Próximos passos:/i)[0];
-            let valorRecuperar = null, localErro = '', embasamento = '';
-            let valorRegex = /R\$\s*[\d\.]+,[\d]{2}/g;
-            let valorMatch = valorRegex.exec(textoLimpo);
-            if (valorMatch) {
-                valorRecuperar = valorMatch[0];
-                let antesValor = textoLimpo.slice(0, valorMatch.index);
-                let linhas = antesValor.split(/\n/).reverse();
-                for (let linha of linhas) {
-                    if (/^#+/.test(linha.trim())) {
-                        localErro = linha.replace(/[#*]/g, '').trim();
-                        break;
-                    }
-                }
-                let depoisValor = textoLimpo.slice(valorMatch.index);
-                let linhasDepois = depoisValor.split(/\n/).slice(0, 8);
-                for (let linha of linhasDepois) {
-                    if (/problema|motivo|verificar|explica/i.test(linha)) {
-                        embasamento = linha.replace(/\*\*/g, '').replace(/[:：]/g, '').trim();
-                        break;
-                    }
-                }
-            }
-            let html = '';
-            if (valorRecuperar) {
-                html += '<div style="font-size:1.15rem;font-weight:700;color:#1976d2;margin-bottom:8px;">Valor a ser recuperado sugerido: <span style="color:#27ae60;">' + valorRecuperar + '</span>';
-                if (localErro) html += '<br><span style="font-weight:400;color:#333;">Local: ' + localErro + '</span>';
-                if (embasamento) html += '<br><span style="font-weight:400;color:#555;">Embasamento: ' + embasamento + '</span>';
-                html += '</div>';
-            }
-            html += marked.parse(textoLimpo);
-            document.getElementById(targetId).innerHTML = html;
-        }
+        
+        // Renderizar markdown inicial
         document.addEventListener('DOMContentLoaded', function() {
             var iaDiv = document.getElementById('ia-markdown-estatico');
             if (iaDiv && window.marked) {
-                renderIaMarkdownIA(iaDiv.textContent, 'ia-markdown-estatico');
+                iaDiv.innerHTML = marked.parse(iaDiv.textContent);
             }
         });
-        </script>
-    </div>
+    </script>
 </body>
 </html> 
